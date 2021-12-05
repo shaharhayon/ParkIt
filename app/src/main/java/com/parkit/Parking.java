@@ -1,22 +1,22 @@
 package com.parkit;
+
 import androidx.annotation.NonNull;
 
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentChange;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
-import com.google.firebase.Timestamp;
-import com.google.firebase.database.*;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Parking {
@@ -29,13 +29,15 @@ public class Parking {
     Timestamp start_time;
     Timestamp end_time;
     Timestamp expire_time;
+    String image_url;
 
     public int getParking_id() {
         return parking_id;
     }
 
     public Parking(int parking_id, int owner_id, int client_id, GeoPoint location, boolean status,
-                   Timestamp publish_time, Timestamp start_time, Timestamp end_time, Timestamp expire_time) {
+                   Timestamp publish_time, Timestamp start_time, Timestamp end_time, Timestamp expire_time,
+                   String image_url) {
         this.parking_id = parking_id;
         this.owner_id = owner_id;
         this.client_id = client_id;
@@ -45,9 +47,10 @@ public class Parking {
         this.start_time = start_time;
         this.end_time = end_time;
         this.expire_time = expire_time;
+        this.image_url = image_url;
     }
 
-    public Parking(Parking p){
+    public Parking(Parking p) {
         this.parking_id = p.parking_id;
         this.owner_id = p.owner_id;
         this.client_id = p.client_id;
@@ -57,9 +60,10 @@ public class Parking {
         this.start_time = p.start_time;
         this.end_time = p.end_time;
         this.expire_time = p.expire_time;
+        this.image_url = image_url;
     }
 
-    public Parking(DocumentSnapshot doc){
+    public Parking(DocumentSnapshot doc) {
         this.parking_id = Integer.valueOf(doc.getId());
         this.owner_id = doc.getLong("owner_id").intValue();
         this.client_id = doc.getLong("client_id").intValue();
@@ -69,6 +73,7 @@ public class Parking {
         this.start_time = doc.getTimestamp("start_time");
         this.end_time = doc.getTimestamp("end_time");
         this.expire_time = doc.getTimestamp("expire_time");
+        this.image_url = doc.getString("image_url");
     }
 
     public void setParking_id(int parking_id) {
@@ -139,7 +144,7 @@ public class Parking {
         this.expire_time = expire_time;
     }
 
-    boolean publish(){
+    boolean publish() {
         Map<String, Object> data = new HashMap<>();
         data.put("parking_id", parking_id);
         data.put("owner_id", owner_id);
@@ -150,6 +155,7 @@ public class Parking {
         data.put("expire_time", expire_time);
         data.put("start_time", start_time);
         data.put("end_time", end_time);
+        data.put("image_url", image_url);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         return db.collection("parking").document(Integer.toString(parking_id)).set(data).isSuccessful();
     }
@@ -165,6 +171,48 @@ public class Parking {
 //                    }
 //                });
         return p;
+    }
+
+    static List<Parking> getClientParkings(int client_id) {
+        List<Parking> result = new ArrayList<>();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        CollectionReference parkings = db.collection("parking");
+        Query query = parkings.whereEqualTo("client_id", client_id);
+        query.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()) {
+                    for (QueryDocumentSnapshot document : task.getResult()) {
+                        result.add(new Parking(document));
+                    }
+                }
+//                else {
+//                     error
+//                }
+            }
+        });
+        return result;
+    }
+
+    static List<Parking> getOwnerParkings(int owner_id) {
+        List<Parking> result = new ArrayList<>();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        CollectionReference parkings = db.collection("parking");
+        Query query = parkings.whereEqualTo("owner_id", owner_id);
+        query.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()) {
+                    for (QueryDocumentSnapshot document : task.getResult()) {
+                        result.add(new Parking(document));
+                    }
+                }
+//                else {
+//                     error
+//                }
+            }
+        });
+        return result;
     }
 
 }
