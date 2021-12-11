@@ -1,4 +1,5 @@
 package com.parkit;
+
 import androidx.annotation.NonNull;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -16,6 +17,8 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,6 +32,8 @@ public class Parking {
     Timestamp start_time;
     Timestamp end_time;
     Timestamp expire_time;
+    //string
+    //available/not
 
     public int getParking_id() {
         return parking_id;
@@ -71,72 +76,16 @@ public class Parking {
         this.expire_time = doc.getTimestamp("expire_time");
     }
 
-    public void setParking_id(int parking_id) {
-        this.parking_id = parking_id;
+    public boolean enable(){
+        this.status = true;
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        return db.collection("parking").document(Integer.toString(parking_id)).update("status", this.status).isSuccessful();
     }
 
-    public int getOwner_id() {
-        return owner_id;
-    }
-
-    public void setOwner_id(int owner_id) {
-        this.owner_id = owner_id;
-    }
-
-    public int getClient_id() {
-        return client_id;
-    }
-
-    public void setClient_id(int client_id) {
-        this.client_id = client_id;
-    }
-
-    public GeoPoint getLocation() {
-        return location;
-    }
-
-    public void setLocation(GeoPoint location) {
-        this.location = location;
-    }
-
-    public boolean isStatus() {
-        return status;
-    }
-
-    public void setStatus(boolean status) {
-        this.status = status;
-    }
-
-    public Timestamp getPublish_time() {
-        return publish_time;
-    }
-
-    public void setPublish_time(Timestamp publish_time) {
-        this.publish_time = publish_time;
-    }
-
-    public Timestamp getStart_time() {
-        return start_time;
-    }
-
-    public void setStart_time(Timestamp start_time) {
-        this.start_time = start_time;
-    }
-
-    public Timestamp getEnd_time() {
-        return end_time;
-    }
-
-    public void setEnd_time(Timestamp end_time) {
-        this.end_time = end_time;
-    }
-
-    public Timestamp getExpire_time() {
-        return expire_time;
-    }
-
-    public void setExpire_time(Timestamp expire_time) {
-        this.expire_time = expire_time;
+    public boolean disable(){
+        this.status = false;
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        return db.collection("parking").document(Integer.toString(parking_id)).update("status", this.status).isSuccessful();
     }
 
     boolean publish(){
@@ -165,6 +114,25 @@ public class Parking {
 //                    }
 //                });
         return p;
+    }
+
+    public boolean end_parking(){
+        Map<String, Object> log = new HashMap<>();
+        log.put("parking_id", this.parking_id);
+        log.put("client_id", this.client_id);
+        log.put("start_time", this.start_time);
+        log.put("end_time", this.end_time);
+
+        SimpleDateFormat sfd = new SimpleDateFormat("dd-MM-yyyy_HH:mm:ss");
+        String start_string = sfd.format(start_time.toDate());
+        StringBuilder sb = new StringBuilder();
+        sb.append(parking_id);
+        sb.append('_');
+        sb.append(start_string);
+        String DocumentName = sb.toString();
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        return db.collection("log").document(DocumentName).set(log).isSuccessful();
     }
 
 }
