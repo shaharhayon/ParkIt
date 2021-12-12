@@ -14,6 +14,30 @@
       },
       "oauth_client": [
         {
+          "client_id": "15408172144-cpcnki5cb3tg4818vdnk6a0gd8rfk52f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.parkit",
+            "certificate_hash": "c3775cb8034cb73653d350124d5a8bc97dbbb71c"
+          }
+        },
+        {
+          "client_id": "15408172144-tikj5fdnoatamro44jr74g2pjs3r9mk1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.parkit",
+            "certificate_hash": "7c22e038978fe7c9ba508100ecdddec164a314b4"
+          }
+        },
+        {
+          "client_id": "15408172144-vpipiujeg6ua165vo4bllj8osbrm8f30.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.parkit",
+            "certificate_hash": "45afd70e3ad076316d3588184646fb001cdbf2c1"
+          }
+        },
+        {
           "client_id": "15408172144-aqc025vr88g2vlla8r9osag4v4tvcspj.apps.googleusercontent.com",
           "client_type": 3
         }
