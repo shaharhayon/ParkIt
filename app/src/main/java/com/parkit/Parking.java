@@ -12,7 +12,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.Timestamp;
-import com.google.firebase.database.*;
+//import com.google.firebase.database.*;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -23,7 +23,9 @@ import java.util.Date;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 public class Parking {
     int parking_id;
@@ -68,15 +70,15 @@ public class Parking {
         this.start_time = p.start_time;
         this.end_time = p.end_time;
         this.expire_time = p.expire_time;
-        this.image_url = image_url;
+        this.image_url = p.image_url;
     }
 
     public Parking(DocumentSnapshot doc) {
-        this.parking_id = Integer.valueOf(doc.getId());
-        this.owner_id = doc.getLong("owner_id").intValue();
-        this.client_id = doc.getLong("client_id").intValue();
+        this.parking_id = Integer.parseInt(doc.getId());
+        this.owner_id = Objects.requireNonNull(doc.getLong("owner_id")).intValue();
+        this.client_id = Objects.requireNonNull(doc.getLong("client_id")).intValue();
         this.location = doc.getGeoPoint("location");
-        this.status = doc.getBoolean("status");
+        this.status = Objects.requireNonNull(doc.getBoolean("status"));
         this.publish_time = doc.getTimestamp("publish_time");
         this.start_time = doc.getTimestamp("start_time");
         this.end_time = doc.getTimestamp("end_time");
@@ -114,7 +116,7 @@ public class Parking {
 
     static Parking getParking(int parking_id) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        Parking p = null;
+        Parking p;
         p = new Parking(db.collection("parking").document(Integer.toString(parking_id)).get().getResult()); // remove getresult to use listener
 //                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
 //                    @Override
@@ -132,14 +134,9 @@ public class Parking {
         log.put("start_time", this.start_time);
         log.put("end_time", this.end_time);
 
-        SimpleDateFormat sfd = new SimpleDateFormat("dd-MM-yyyy_HH:mm:ss");
+        SimpleDateFormat sfd = new SimpleDateFormat("dd-MM-yyyy_HH:mm:ss", Locale.US);
         String start_string = sfd.format(start_time.toDate());
-        StringBuilder sb = new StringBuilder();
-        sb.append(parking_id);
-        sb.append('_');
-        sb.append(start_string);
-        String DocumentName = sb.toString();
-
+        String DocumentName = String.valueOf(parking_id) + '_' + start_string;
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         return db.collection("log").document(DocumentName).set(log).isSuccessful();
     }
@@ -149,18 +146,15 @@ public class Parking {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         CollectionReference parkings = db.collection("parking");
         Query query = parkings.whereEqualTo("client_id", client_id);
-        query.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                if (task.isSuccessful()) {
-                    for (QueryDocumentSnapshot document : task.getResult()) {
-                        result.add(new Parking(document));
-                    }
+        query.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                for (QueryDocumentSnapshot document : task.getResult()) {
+                    result.add(new Parking(document));
                 }
+            }
 //                else {
 //                     error
 //                }
-            }
         });
         return result;
     }
@@ -170,18 +164,15 @@ public class Parking {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         CollectionReference parkings = db.collection("parking");
         Query query = parkings.whereEqualTo("owner_id", owner_id);
-        query.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                if (task.isSuccessful()) {
-                    for (QueryDocumentSnapshot document : task.getResult()) {
-                        result.add(new Parking(document));
-                    }
+        query.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                for (QueryDocumentSnapshot document : task.getResult()) {
+                    result.add(new Parking(document));
                 }
+            }
 //                else {
 //                     error
 //                }
-            }
         });
         return result;
     }
