@@ -45,6 +45,84 @@ public class Parking {
         return parking_id;
     }
 
+    public void setParking_id(int parking_id) {
+        this.parking_id = parking_id;
+    }
+
+    public int getOwner_id() {
+        return owner_id;
+    }
+
+    public void setOwner_id(int owner_id) {
+        this.owner_id = owner_id;
+    }
+
+    public int getClient_id() {
+        return client_id;
+    }
+
+    public void setClient_id(int client_id) {
+        this.client_id = client_id;
+    }
+
+    public GeoPoint getLocation() {
+        return location;
+    }
+
+    public void setLocation(GeoPoint location) {
+        this.location = location;
+    }
+
+    public boolean isStatus() {
+        return status;
+    }
+
+    public void setStatus(boolean status) {
+        this.status = status;
+    }
+
+    public Timestamp getPublish_time() {
+        return publish_time;
+    }
+
+    public void setPublish_time(Timestamp publish_time) {
+        this.publish_time = publish_time;
+    }
+
+    public Timestamp getStart_time() {
+        return start_time;
+    }
+
+    public void setStart_time(Timestamp start_time) {
+        this.start_time = start_time;
+    }
+
+    public Timestamp getEnd_time() {
+        return end_time;
+    }
+
+    public void setEnd_time(Timestamp end_time) {
+        this.end_time = end_time;
+    }
+
+    public Timestamp getExpire_time() {
+        return expire_time;
+    }
+
+    public void setExpire_time(Timestamp expire_time) {
+        this.expire_time = expire_time;
+    }
+
+    public String getImage_url() {
+        return image_url;
+    }
+
+    public void setImage_url(String image_url) {
+        this.image_url = image_url;
+    }
+
+    public Parking(){};
+
     public Parking(int parking_id, int owner_id, int client_id, GeoPoint location, boolean status,
                    Timestamp publish_time, Timestamp start_time, Timestamp end_time, Timestamp expire_time,
                    String image_url) {
