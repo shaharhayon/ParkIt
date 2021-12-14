@@ -6,11 +6,10 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.icu.util.Calendar;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.InputType;
 import android.util.Log;
@@ -21,24 +20,31 @@ import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProvider;
+import androidx.fragment.app.FragmentResultListener;
 
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
 
-import com.google.type.LatLng;
-import com.parkit.MainActivity;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.GeoPoint;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.parkit.Parking;
 import com.parkit.R;
 import com.parkit.databinding.FragmentHomeBinding;
@@ -53,6 +59,14 @@ public class HomeFragment extends Fragment {
     static final int REQUEST_IMAGE_CAPTURE = 0;
     static final int REQUEST_IMAGE_GALLERY = 1;
 
+    String currentPhotoPath;
+
+    private Uri outputFileUri;
+    private LatLng location;
+    private String owner_id;
+    private String imageUri;
+    private int nextParking;
+
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
 //        homeViewModel =
@@ -61,16 +75,22 @@ public class HomeFragment extends Fragment {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
+
+        owner_id = FirebaseAuth.getInstance().getUid();
+
+
         Fragment fragment = new MapFragment();
         getChildFragmentManager().beginTransaction().replace(R.id.fragmentContainerView,fragment).commit();
         getChildFragmentManager().setFragmentResultListener("location", this, new FragmentResultListener() {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
-                LatLng location = result.getParcelable("location");
+                location = result.getParcelable("location");
                 Log.d("Location",location.toString()); // WE HAVE A RESULT FROM THE MAP
+                Toast toast = Toast.makeText(getActivity().getApplicationContext(),
+                        location.toString(), Toast.LENGTH_LONG);
+                toast.show();
             }
         });
-
 
         EditText startdate_box = binding.dateStartBox;
         startdate_box.setInputType(InputType.TYPE_NULL);
@@ -87,13 +107,18 @@ public class HomeFragment extends Fragment {
         camera_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                Intent takePicture = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-//                File f = new File(android.os.Environment.getExternalStorageDirectory(),
-//                        "temp_img.jpg");
-//                takePicture.putExtra(MediaStore.EXTRA_OUTPUT, f);
-//                startActivityForResult(takePicture, 0);//zero can be replaced with any action code (called requestCode)
+                File f = new File(getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES),
+                        File.separator + "CAM" + File.separator);
+                f.mkdirs();
+                String fname = owner_id + ".jpg";
+                File sdImageMainDirectory = new File(f, fname);
+//                outputFileUri = Uri.fromFile(sdImageMainDirectory);
+                outputFileUri = FileProvider.getUriForFile(getActivity().getApplicationContext(), getActivity().getApplicationContext().getPackageName() + ".provider", sdImageMainDirectory);
 
                 Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
+                takePictureIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                takePictureIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 try {
                     startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
                 } catch (ActivityNotFoundException e) {
@@ -108,52 +133,87 @@ public class HomeFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 Intent pickPhoto = new Intent(Intent.ACTION_PICK,
-                        android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                 startActivityForResult(pickPhoto , 1);//one can be replaced with any action code
 
             }
         });
+
         p = new Parking();
+
+        Button publish_button = binding.publishButton;
+        publish_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                FirebaseFirestore.getInstance().collection("parking").whereEqualTo("owner_id", owner_id)
+                        .get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if(task.isSuccessful()){
+                            int nextParkings = task.getResult().getDocuments().size() + 1;
+                        }
+                    }
+                });
+
+                p.setLocation(new GeoPoint(location.latitude, location.longitude));
+                p.setPublish_time(new Timestamp(stringToDate(startdate_box.getText().toString())));
+                p.setExpire_time(new Timestamp(stringToDate(enddate_box.getText().toString())));
+//                p.setParking_id(nextParking);
+                // owner
+                // address
+
+
+
+
+                int id = 0; // parking id
+                FirebaseStorage storage = FirebaseStorage.getInstance();
+                StorageReference storageRef = storage.getReference();
+                StorageReference imgRef = storageRef.child("images/" + id);
+//                img.setDrawingCacheEnabled(true);
+//                img.buildDrawingCache();
+
+                imgRef.putFile(outputFileUri).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                        if(task.isSuccessful()){
+                            Toast.makeText(getActivity(),"Image Uploaded Successfully",Toast.LENGTH_SHORT).show();
+                            imageUri = task.getResult().getMetadata().getPath().toString();
+//                            Toast.makeText(getActivity(),imageUri,Toast.LENGTH_SHORT).show();
+                            p.publish();
+                        }
+                        else {
+                            Toast.makeText(getActivity(), task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+
+                        }
+                    }
+                });
+
+
+
+
+
+            }
+        });
         return root;
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            binding.imgParking.setImageBitmap(imageBitmap);
-//            android.os.Environment.getExternalStorageDirectory()
+        if(resultCode == RESULT_OK){
+            switch (requestCode){
+                case REQUEST_IMAGE_CAPTURE:
+                    binding.imgParking.setImageURI(outputFileUri);
+//            Toast toast = Toast.makeText(getActivity().getApplicationContext(),
+//                    data.getData().getPath(),
+//                    Toast.LENGTH_LONG);
+//            toast.show();
+                    break;
+                case REQUEST_IMAGE_GALLERY:
+                    binding.imgParking.setImageURI(data.getData());
+            }
         }
     }
-
-
-//    @Override
-//    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-//        super.onActivityResult(requestCode, resultCode, data);
-//
-//        if(resultCode == RESULT_OK){
-//            if(requestCode == 0){
-//                File f = new File(android.os.Environment.getExternalStorageDirectory().toString());
-//                for (File temp : f.listFiles()) {
-//                    if (temp.getName().equals("temp_img.jpg")) {
-//                        f = temp;
-//                        break;
-//                    }
-//                }
-//                try{
-//                    Bitmap bitmap;
-//                    BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-//                    bitmap = BitmapFactory.decodeFile(f.getAbsolutePath(), bitmapOptions);
-//                    binding.imgParking.setImageBitmap(bitmap);
-//                }
-//                catch (Exception e){
-//                    Log.d("IMAGE_CAM", e.getMessage());
-//                }
-//            }
-//        }
-//    }
-
 
     private View.OnClickListener datepicker(EditText textbox) {
         return new View.OnClickListener() {
@@ -209,28 +269,20 @@ public class HomeFragment extends Fragment {
         return new Date(year,month, day, hour, minute);
     }
 
-//    private View.OnClickListener timepicker(EditText textbox) {
-//        return new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-////               DatePicker dp = root.findViewById(R.id.datePicker_start);
-////               dp.setVisibility(View.VISIBLE);
-//
-//                final Calendar cldr = Calendar.getInstance();
-//                int hour = cldr.get(Calendar.HOUR);
-//                int minute = cldr.get(Calendar.MINUTE);
-//
-//                TimePickerDialog picker = new TimePickerDialog(getActivity(),
-//                        new TimePickerDialog.OnTimeSetListener() {
-//                            @Override
-//                            public void onTimeSet(TimePicker view, int hour, int minute) {
-//                                textbox.setText(hour + ":" + minute);
-//                            }
-//                        }, hour, minute, false);
-//                picker.show();
-//            }
-//        };
-//    }
+    private long hashID(int parking_id){
+        final int numParkings;
+        FirebaseFirestore.getInstance().collection("parking").whereEqualTo("owner_id", owner_id)
+                .get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if(task.isSuccessful()){
+                    numParkings = task.getResult().getDocuments().size();
+                }
+            }
+        });
+
+        return 31 * numParkings + owner_id.hashCode();
+    }
 
     @Override
     public void onDestroyView() {

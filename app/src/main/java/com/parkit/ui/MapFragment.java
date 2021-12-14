@@ -48,6 +48,7 @@ public class MapFragment extends Fragment {
                         Bundle args = new Bundle();
                         args.putParcelable("location",latLng);
                         homeFragment.setFragmentResult("location",args);
+//                        homeFragment.setFragmentResult("location",args);
 //                        googleMap.clear();
 //                        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,10));
                         googleMap.addMarker(markerOptions);

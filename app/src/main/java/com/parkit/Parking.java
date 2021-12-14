@@ -1,7 +1,12 @@
 package com.parkit;
+import android.app.Application;
+import android.util.Log;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
@@ -176,7 +181,7 @@ public class Parking {
         return db.collection("parking").document(Integer.toString(parking_id)).update("status", this.status).isSuccessful();
     }
 
-    boolean publish() {
+    public void publish() {
         Map<String, Object> data = new HashMap<>();
         data.put("parking_id", parking_id);
         data.put("owner_id", owner_id);
@@ -189,7 +194,17 @@ public class Parking {
         data.put("end_time", end_time);
         data.put("image_url", image_url);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        return db.collection("parking").document(Integer.toString(parking_id)).set(data).isSuccessful();
+        db.collection("parking").document(Integer.toString(parking_id)).set(data).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(@NonNull Void unused) {
+                Log.d("UPLOAD", "upload success");
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.d("UPLOAD", "upload failed", e);
+            }
+        });
     }
 
     static Parking getParking(int parking_id) {
