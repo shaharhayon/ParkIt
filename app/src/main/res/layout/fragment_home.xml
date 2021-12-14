@@ -18,5 +18,28 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+<<<<<<< Updated upstream
         app:layout_constraintTop_toTopOf="parent" />
+=======
+        app:layout_constraintTop_toBottomOf="@+id/date_start_box" />
+
+    <EditText
+        android:id="@+id/date_end_box"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="date"
+        android:textAlignment="center"
+        app:layout_constraintStart_toStartOf="@+id/date_start_box"
+        app:layout_constraintTop_toBottomOf="@+id/date_end_text" />
+
+    <FrameLayout
+        android:id="@+id/frame_layout"
+        android:layout_width="190dp"
+        android:layout_height="145dp"
+        tools:layout_editor_absoluteX="110dp"
+        tools:layout_editor_absoluteY="235dp" />
+
+
+>>>>>>> Stashed changes
 </androidx.constraintlayout.widget.ConstraintLayout>
