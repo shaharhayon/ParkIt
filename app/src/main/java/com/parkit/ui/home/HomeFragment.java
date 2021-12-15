@@ -35,6 +35,7 @@ import com.google.firebase.Timestamp;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.UUID;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -114,7 +115,9 @@ public class HomeFragment extends Fragment {
                 String fname = owner_id + ".jpg";
                 File sdImageMainDirectory = new File(f, fname);
 //                outputFileUri = Uri.fromFile(sdImageMainDirectory);
-                outputFileUri = FileProvider.getUriForFile(getActivity().getApplicationContext(), getActivity().getApplicationContext().getPackageName() + ".provider", sdImageMainDirectory);
+                outputFileUri = FileProvider.getUriForFile(getActivity().getApplicationContext(),
+                        getActivity().getApplicationContext().getPackageName() + ".provider",
+                        sdImageMainDirectory);
 
                 Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
@@ -147,36 +150,35 @@ public class HomeFragment extends Fragment {
             @Override
             public void onClick(View v) {
 
-
-
+                UUID uuid =  UUID.randomUUID();
+                String StorageImgPath = "images/" + uuid.toString();
+                // Parking_ID is the name of the document in firestore, auto-generated
                 p.setLocation(new GeoPoint(location.latitude, location.longitude));
                 p.setPublish_time(new Timestamp(stringToDate(startdate_box.getText().toString())));
                 p.setExpire_time(new Timestamp(stringToDate(enddate_box.getText().toString())));
-//                p.setParking_id(nextParking);
-                // owner
+                p.setOwner_id(owner_id);
                 // address
+                p.setImage_url(StorageImgPath);
+
+                p.publish();
 
 
-
-
-                int id = 0; // parking id
                 FirebaseStorage storage = FirebaseStorage.getInstance();
                 StorageReference storageRef = storage.getReference();
-                StorageReference imgRef = storageRef.child("images/" + id);
-//                img.setDrawingCacheEnabled(true);
-//                img.buildDrawingCache();
+                StorageReference imgRef = storageRef.child(StorageImgPath);
 
                 imgRef.putFile(outputFileUri).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
                         if(task.isSuccessful()){
-                            Toast.makeText(getActivity(),"Image Uploaded Successfully",Toast.LENGTH_SHORT).show();
-                            imageUri = task.getResult().getMetadata().getPath();
+//                            Toast.makeText(getActivity(),"Image Uploaded Successfully",Toast.LENGTH_SHORT).show();
+//                            imageUri = task.getResult().getMetadata().getPath();
+                            Log.d("UPLOAD", "upload image success");
 //                            Toast.makeText(getActivity(),imageUri,Toast.LENGTH_SHORT).show();
-                            p.publish();
                         }
                         else {
-                            Toast.makeText(getActivity(), task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+//                            Toast.makeText(getActivity(), task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                            Log.d("UPLOAD", "upload image failure");
 
                         }
                     }
