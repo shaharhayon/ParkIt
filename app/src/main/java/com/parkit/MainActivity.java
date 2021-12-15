@@ -5,9 +5,15 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.Menu;
 
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
@@ -17,6 +23,7 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.parkit.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
@@ -37,8 +44,20 @@ public class MainActivity extends AppCompatActivity {
 //                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
 //                        .setAction("Action", null).show();
 
-                Intent intent = new Intent(getApplicationContext(),SIgnInActivity.class);
-                startActivity(intent);
+                FirebaseAuth.getInstance().signOut();
+                GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .requestIdToken("15408172144-vj4dgebr6m46ar68r76eogmg04qp22ga.apps.googleusercontent.com")
+                        .requestEmail()
+                        .build();
+                GoogleSignIn.getClient(getApplication(), gso).signOut().addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        Intent intent = new Intent(getApplicationContext(),SIgnInActivity.class);
+                        startActivity(intent);
+                    }
+                });
+
+
             }
         });
         DrawerLayout drawer = binding.drawerLayout;

@@ -54,6 +54,7 @@ public class SIgnInActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in);
         mAuth = FirebaseAuth.getInstance();
+
         createRequest();
 
         findViewById(R.id.google_signin).setOnClickListener(new View.OnClickListener() {
