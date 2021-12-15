@@ -64,8 +64,9 @@ public class HomeFragment extends Fragment {
     private Uri outputFileUri;
     private LatLng location;
     private String owner_id;
+    private long temp_parking_id;
     private String imageUri;
-    private int nextParking;
+
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -146,15 +147,7 @@ public class HomeFragment extends Fragment {
             @Override
             public void onClick(View v) {
 
-                FirebaseFirestore.getInstance().collection("parking").whereEqualTo("owner_id", owner_id)
-                        .get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if(task.isSuccessful()){
-                            int nextParkings = task.getResult().getDocuments().size() + 1;
-                        }
-                    }
-                });
+
 
                 p.setLocation(new GeoPoint(location.latitude, location.longitude));
                 p.setPublish_time(new Timestamp(stringToDate(startdate_box.getText().toString())));
@@ -178,7 +171,7 @@ public class HomeFragment extends Fragment {
                     public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
                         if(task.isSuccessful()){
                             Toast.makeText(getActivity(),"Image Uploaded Successfully",Toast.LENGTH_SHORT).show();
-                            imageUri = task.getResult().getMetadata().getPath().toString();
+                            imageUri = task.getResult().getMetadata().getPath();
 //                            Toast.makeText(getActivity(),imageUri,Toast.LENGTH_SHORT).show();
                             p.publish();
                         }
@@ -245,8 +238,6 @@ public class HomeFragment extends Fragment {
                                             }
                                         }, hour, minute, true);
                                 picker.show();
-
-
                             }
                         }, year, month, day);
                 picker.show();
@@ -260,28 +251,26 @@ public class HomeFragment extends Fragment {
         return number <= 9 ? "0" + number : String.valueOf(number);
     }
 
-    private Date stringToDate(String date){
-        int year = Integer.parseInt(date.substring(6,10));
-        int month = Integer.parseInt(date.substring(3,5));
+    private Date stringToDate(String date){ //
+        int year = Integer.parseInt(date.substring(6,10)) - 1900;
+        int month = Integer.parseInt(date.substring(3,5)) - 1;
         int day = Integer.parseInt(date.substring(0,2));
         int hour = Integer.parseInt(date.substring(11,13));
         int minute = Integer.parseInt(date.substring(14));
         return new Date(year,month, day, hour, minute);
     }
 
-    private long hashID(int parking_id){
-        final int numParkings;
+    private long hashID(){
         FirebaseFirestore.getInstance().collection("parking").whereEqualTo("owner_id", owner_id)
                 .get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
                 if(task.isSuccessful()){
-                    numParkings = task.getResult().getDocuments().size();
+                    int nextParkings = task.getResult().getDocuments().size() + 1;
                 }
             }
         });
-
-        return 31 * numParkings + owner_id.hashCode();
+        return 31 * temp_parking_id + owner_id.hashCode();
     }
 
     @Override

@@ -1,7 +1,5 @@
 package com.parkit;
-import android.app.Application;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -11,19 +9,14 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentChange;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
-import com.google.firebase.Timestamp;
 //import com.google.firebase.database.*;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,9 +26,9 @@ import java.util.Map;
 import java.util.Objects;
 
 public class Parking {
-    int parking_id;
-    int owner_id;
-    int client_id;
+    String parking_id;
+    String owner_id;
+    String client_id;
     GeoPoint location;
     boolean status;
     Timestamp publish_time;
@@ -46,27 +39,27 @@ public class Parking {
     //available/not
     String image_url;
 
-    public int getParking_id() {
+    public String getParking_id() {
         return parking_id;
     }
 
-    public void setParking_id(int parking_id) {
+    public void setParking_id(String parking_id) {
         this.parking_id = parking_id;
     }
 
-    public int getOwner_id() {
+    public String getOwner_id() {
         return owner_id;
     }
 
-    public void setOwner_id(int owner_id) {
+    public void setOwner_id(String owner_id) {
         this.owner_id = owner_id;
     }
 
-    public int getClient_id() {
+    public String getClient_id() {
         return client_id;
     }
 
-    public void setClient_id(int client_id) {
+    public void setClient_id(String client_id) {
         this.client_id = client_id;
     }
 
@@ -128,7 +121,7 @@ public class Parking {
 
     public Parking(){};
 
-    public Parking(int parking_id, int owner_id, int client_id, GeoPoint location, boolean status,
+    public Parking(String parking_id, String owner_id, String client_id, GeoPoint location, boolean status,
                    Timestamp publish_time, Timestamp start_time, Timestamp end_time, Timestamp expire_time,
                    String image_url) {
         this.parking_id = parking_id;
@@ -157,9 +150,9 @@ public class Parking {
     }
 
     public Parking(DocumentSnapshot doc) {
-        this.parking_id = Integer.parseInt(doc.getId());
-        this.owner_id = Objects.requireNonNull(doc.getLong("owner_id")).intValue();
-        this.client_id = Objects.requireNonNull(doc.getLong("client_id")).intValue();
+        this.parking_id = doc.getId();
+        this.owner_id = doc.getString("owner_id");
+        this.client_id = doc.getString("client_id");
         this.location = doc.getGeoPoint("location");
         this.status = Objects.requireNonNull(doc.getBoolean("status"));
         this.publish_time = doc.getTimestamp("publish_time");
@@ -172,13 +165,13 @@ public class Parking {
     public boolean enable(){
         this.status = true;
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        return db.collection("parking").document(Integer.toString(parking_id)).update("status", this.status).isSuccessful();
+        return db.collection("parking").document(parking_id).update("status", this.status).isSuccessful();
     }
 
     public boolean disable(){
         this.status = false;
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        return db.collection("parking").document(Integer.toString(parking_id)).update("status", this.status).isSuccessful();
+        return db.collection("parking").document(parking_id).update("status", this.status).isSuccessful();
     }
 
     public void publish() {
@@ -194,7 +187,7 @@ public class Parking {
         data.put("end_time", end_time);
         data.put("image_url", image_url);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("parking").document(Integer.toString(parking_id)).set(data).addOnSuccessListener(new OnSuccessListener<Void>() {
+        db.collection("parking").document().set(data).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(@NonNull Void unused) {
                 Log.d("UPLOAD", "upload success");
@@ -207,18 +200,48 @@ public class Parking {
         });
     }
 
-    static Parking getParking(int parking_id) {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        Parking p;
-        p = new Parking(db.collection("parking").document(Integer.toString(parking_id)).get().getResult()); // remove getresult to use listener
-//                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-//                    @Override
-//                    public void onSuccess(DocumentSnapshot doc) {
-//                        Parking park = new Parking(doc);
-//                    }
-//                });
-        return p;
-    }
+//    public interface MyCallback {
+//        DocumentSnapshot onCallback(DocumentSnapshot doc);
+//    }
+//
+//    public void getParking(String parking_id, MyCallback callback) {
+//        Parking p = new Parking();
+//        FirebaseFirestore db = FirebaseFirestore.getInstance();
+//        db.collection("parking").document(parking_id).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+//            @Override
+//            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+//                callback.onCallback(task.getResult());p=new Parking(task.getResult());
+//            }
+//        });DocumentSnapshot d = getdoc(new MyCallback() {
+//            @Override
+//            public DocumentSnapshot onCallback(DocumentSnapshot doc) {
+//                return doc;
+//            }
+//        }, "abc");
+//    }
+//
+//    private DocumentSnapshot getdoc(MyCallback callback, String str){
+//        FirebaseFirestore db = FirebaseFirestore.getInstance();
+//        db.collection("parking").document(parking_id).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+//            @Override
+//            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+//                callback.onCallback(task.getResult());
+//            }
+//        });
+//    }
+//
+//    private void loadFromDocument(DocumentSnapshot doc){
+//        this.parking_id = doc.getId();
+//        this.owner_id = doc.getString("owner_id");
+//        this.client_id = doc.getString("client_id");
+//        this.location = doc.getGeoPoint("location");
+//        this.status = Objects.requireNonNull(doc.getBoolean("status"));
+//        this.publish_time = doc.getTimestamp("publish_time");
+//        this.start_time = doc.getTimestamp("start_time");
+//        this.end_time = doc.getTimestamp("end_time");
+//        this.expire_time = doc.getTimestamp("expire_time");
+//        this.image_url = doc.getString("image_url");
+//    }
 
     public boolean end_parking(){
         Map<String, Object> log = new HashMap<>();

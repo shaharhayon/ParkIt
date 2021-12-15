@@ -11,6 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="27dp"
+        android:clickable="false"
         android:ems="10"
         android:inputType="date"
         android:text="Start Date"
