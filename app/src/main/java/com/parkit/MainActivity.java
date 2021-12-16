@@ -25,6 +25,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.parkit.databinding.ActivityMainBinding;
+import com.parkit.databinding.ActivitySignInBinding;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -44,19 +45,7 @@ public class MainActivity extends AppCompatActivity {
 //                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
 //                        .setAction("Action", null).show();
 
-                FirebaseAuth.getInstance().signOut();
-                GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                        .requestIdToken("15408172144-vj4dgebr6m46ar68r76eogmg04qp22ga.apps.googleusercontent.com")
-                        .requestEmail()
-                        .build();
-                GoogleSignIn.getClient(getApplication(), gso).signOut().addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        Intent intent = new Intent(getApplicationContext(),SIgnInActivity.class);
-                        startActivity(intent);
-                    }
-                });
-
+                signOut();
 
             }
         });
@@ -75,6 +64,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        if (FirebaseAuth.getInstance().getCurrentUser() == null){
+
+        }
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
@@ -88,18 +85,30 @@ public class MainActivity extends AppCompatActivity {
                 || super.onSupportNavigateUp();
     }
 
-//    private static class publishFragment extends Fragment{
-//        @Override
-//        public void onCreate(@Nullable Bundle savedInstanceState) {
-//            super.onCreate(savedInstanceState);
-//        }
-//    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         for (Fragment fragment : getSupportFragmentManager().getFragments()) {
             fragment.onActivityResult(requestCode, resultCode, data);
         }
+    }
+
+    private void openSignIn(){
+        Intent intent = new Intent(getApplicationContext(),SIgnInActivity.class);
+        startActivity(intent);
+    }
+
+    private void signOut(){
+        FirebaseAuth.getInstance().signOut();
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken("15408172144-vj4dgebr6m46ar68r76eogmg04qp22ga.apps.googleusercontent.com")
+                .requestEmail()
+                .build();
+        GoogleSignIn.getClient(getApplication(), gso).signOut().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                openSignIn();
+            }
+        });
     }
 }

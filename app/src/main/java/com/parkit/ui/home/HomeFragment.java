@@ -27,6 +27,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentResultListener;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -53,33 +54,37 @@ import com.parkit.ui.MapFragment;
 
 public class HomeFragment extends Fragment {
 
-    private HomeViewModel homeViewModel;
+//    private HomeViewModel homeViewModel;
     private FragmentHomeBinding binding;
     private Parking p;
 
     static final int REQUEST_IMAGE_CAPTURE = 0;
     static final int REQUEST_IMAGE_GALLERY = 1;
 
-    String currentPhotoPath;
-
     private Uri outputFileUri;
     private LatLng location;
     private String owner_id;
-    private long temp_parking_id;
-    private String imageUri;
+//    private String imageUri;
 
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-//        homeViewModel =
-//                new ViewModelProvider(this).get(HomeViewModel.class);
+//        homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
 
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-
         owner_id = FirebaseAuth.getInstance().getUid();
 
+        // Widgets
+
+        EditText startdate_box = binding.dateStartBox;
+        EditText enddate_box = binding.dateEndBox;
+        Button camera_button = binding.buttonImgCamera;
+        Button gallery_button = binding.buttonImgGallery;
+        Button publish_button = binding.publishButton;
+
+        // Map Fragment
 
         Fragment fragment = new MapFragment();
         getChildFragmentManager().beginTransaction().replace(R.id.fragmentContainerView,fragment).commit();
@@ -88,24 +93,17 @@ public class HomeFragment extends Fragment {
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
                 location = result.getParcelable("location");
                 Log.d("Location",location.toString()); // WE HAVE A RESULT FROM THE MAP
-                Toast toast = Toast.makeText(getActivity().getApplicationContext(),
-                        location.toString(), Toast.LENGTH_LONG);
-                toast.show();
             }
         });
 
-        EditText startdate_box = binding.dateStartBox;
+        // Widgets setup
+
         startdate_box.setInputType(InputType.TYPE_NULL);
         startdate_box.setOnClickListener(datepicker(startdate_box));
 
-        EditText enddate_box = binding.dateEndBox;
         enddate_box.setInputType(InputType.TYPE_NULL);
         enddate_box.setOnClickListener(datepicker(enddate_box));
 
-        ImageView img = binding.imgParking;
-//        img.setImageURI();
-
-        Button camera_button = binding.buttonImgCamera;
         camera_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -119,10 +117,10 @@ public class HomeFragment extends Fragment {
                         getActivity().getApplicationContext().getPackageName() + ".provider",
                         sdImageMainDirectory);
 
-                Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
-                takePictureIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                takePictureIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                        .putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri)
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        .addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 try {
                     startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
                 } catch (ActivityNotFoundException e) {
@@ -132,27 +130,31 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        Button gallery_button = binding.buttonImgGallery;
         gallery_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent pickPhoto = new Intent(Intent.ACTION_PICK,
                         MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(pickPhoto , 1);//one can be replaced with any action code
+                startActivityForResult(pickPhoto , REQUEST_IMAGE_GALLERY);//one can be replaced with any action code
 
             }
         });
 
-        p = new Parking();
-
-        Button publish_button = binding.publishButton;
         publish_button.setOnClickListener(new View.OnClickListener() {
+            /**
+             * Generates unique ID for the image and saves it as its URL
+             * inserts all the data into new Parking object p
+             * calls Parking.publish
+             * uploads image to Storage
+             * @param v
+             */
             @Override
             public void onClick(View v) {
-
                 UUID uuid =  UUID.randomUUID();
                 String StorageImgPath = "images/" + uuid.toString();
                 // Parking_ID is the name of the document in firestore, auto-generated
+
+                p = new Parking();
                 p.setLocation(new GeoPoint(location.latitude, location.longitude));
                 p.setPublish_time(new Timestamp(stringToDate(startdate_box.getText().toString())));
                 p.setExpire_time(new Timestamp(stringToDate(enddate_box.getText().toString())));
@@ -161,7 +163,6 @@ public class HomeFragment extends Fragment {
                 p.setImage_url(StorageImgPath);
 
                 p.publish();
-
 
                 FirebaseStorage storage = FirebaseStorage.getInstance();
                 StorageReference storageRef = storage.getReference();
@@ -183,16 +184,20 @@ public class HomeFragment extends Fragment {
                         }
                     }
                 });
-
-
-
-
-
             }
         });
+
         return root;
     }
 
+    /**
+     * Handles results for activities:
+     * + Image capture using camera
+     * + Image selection from gallery
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(resultCode == RESULT_OK){
@@ -210,13 +215,15 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    /**
+     * Returns date and time interactive picker that stores data into EditText textbox
+     * @param textbox
+     * @return View.OnClickListener
+     */
     private View.OnClickListener datepicker(EditText textbox) {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//               DatePicker dp = root.findViewById(R.id.datePicker_start);
-//               dp.setVisibility(View.VISIBLE);
-
                 final Calendar cldr = Calendar.getInstance();
                 int day = cldr.get(Calendar.DAY_OF_MONTH);
                 int month = cldr.get(Calendar.MONTH);
@@ -235,7 +242,6 @@ public class HomeFragment extends Fragment {
                                         new TimePickerDialog.OnTimeSetListener() {
                                             @Override
                                             public void onTimeSet(TimePicker view, int hour, int minute) {
-//                                                textbox.setText(hour + ":" + minute);
                                                 textbox.getText().append(" " + checkDigit(hour) + ":" + checkDigit(minute));
                                             }
                                         }, hour, minute, true);
@@ -244,35 +250,31 @@ public class HomeFragment extends Fragment {
                         }, year, month, day);
                 picker.show();
             }
-
-
         };
     }
 
+    /**
+     * Adds preceding zero to single digit integer
+     * @param number
+     * @return String
+     */
     public String checkDigit(int number) {
-        return number <= 9 ? "0" + number : String.valueOf(number);
+        return number <= 9 ? "0" + number : String.valueOf(number);stringToDate()
     }
 
-    private Date stringToDate(String date){ //
+    /**
+     * Convert text in EditText into Date object,
+     * Fix numbers using constant because of how java Date object works
+     * @param date
+     * @return Date object from String date
+     */
+    private Date stringToDate(String date){
         int year = Integer.parseInt(date.substring(6,10)) - 1900;
         int month = Integer.parseInt(date.substring(3,5)) - 1;
         int day = Integer.parseInt(date.substring(0,2));
         int hour = Integer.parseInt(date.substring(11,13));
         int minute = Integer.parseInt(date.substring(14));
         return new Date(year,month, day, hour, minute);
-    }
-
-    private long hashID(){
-        FirebaseFirestore.getInstance().collection("parking").whereEqualTo("owner_id", owner_id)
-                .get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                if(task.isSuccessful()){
-                    int nextParkings = task.getResult().getDocuments().size() + 1;
-                }
-            }
-        });
-        return 31 * temp_parking_id + owner_id.hashCode();
     }
 
     @Override
