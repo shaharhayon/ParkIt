@@ -259,7 +259,7 @@ public class HomeFragment extends Fragment {
      * @return String
      */
     public String checkDigit(int number) {
-        return number <= 9 ? "0" + number : String.valueOf(number);stringToDate()
+        return number <= 9 ? "0" + number : String.valueOf(number);
     }
 
     /**
