@@ -115,7 +115,13 @@ public class HomeFragment extends Fragment {
 
         // Widgets setup
 
-
+        address_box.setIconifiedByDefault(true);
+        address_box.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                address_box.setIconified(false);
+            }
+        });
         address_box.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
