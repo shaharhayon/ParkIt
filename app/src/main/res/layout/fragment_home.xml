@@ -4,16 +4,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_marginHorizontal="@dimen/activity_horizontal_margin"
     tools:context=".ui.home.HomeFragment">
 
     <EditText
         android:id="@+id/date_start_box"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="72dp"
+        android:layout_marginTop="25dp"
         android:layout_marginBottom="1dp"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
         android:clickable="false"
-        android:ems="10"
         android:focusable="false"
         android:inputType="date"
         android:text="Start Date"
@@ -26,10 +27,10 @@
 
     <EditText
         android:id="@+id/date_end_box"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:clickable="false"
-        android:ems="10"
         android:focusable="false"
         android:inputType="date"
         android:text="End Date"
@@ -39,16 +40,15 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/date_start_box" />
 
-    <ImageView
-        android:id="@+id/img_parking"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="1dp"
-        android:src="@android:drawable/ic_menu_report_image"
-        app:layout_constraintBottom_toTopOf="@+id/fragmentContainerView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/button_img_gallery"
+    <Button
+        android:id="@+id/button_img_camera"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Camera"
+        app:layout_constraintBottom_toTopOf="@+id/button_img_gallery"
+        app:layout_constraintEnd_toStartOf="@+id/img_parking"
+        app:layout_constraintHorizontal_bias="0.479"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/date_start_box" />
 
     <Button
@@ -64,16 +64,32 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button_img_camera" />
 
-    <Button
-        android:id="@+id/button_img_camera"
-        android:layout_width="wrap_content"
+    <ImageView
+        android:id="@+id/img_parking"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="1dp"
+        android:src="@android:drawable/ic_menu_report_image"
+        app:layout_constraintBottom_toTopOf="@+id/address_box"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/button_img_gallery"
+        app:layout_constraintTop_toBottomOf="@+id/date_start_box" />
+
+    <SearchView
+        android:id="@+id/address_box"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Camera"
-        app:layout_constraintBottom_toTopOf="@+id/button_img_gallery"
-        app:layout_constraintEnd_toStartOf="@+id/img_parking"
+        android:clickable="true"
+        android:focusable="true"
+        android:inputType="textPostalAddress"
+        android:text="@string/address_bar"
+        android:textAlignment="center"
+        app:layout_constraintBottom_toTopOf="@+id/fragmentContainerView"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/date_start_box" />
+        app:layout_constraintTop_toBottomOf="@+id/img_parking" />
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragmentContainerView"
@@ -84,7 +100,7 @@
         app:layout_constraintBottom_toTopOf="@+id/publish_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/img_parking" />
+        app:layout_constraintTop_toBottomOf="@+id/address_box" />
 
     <Button
         android:id="@+id/publish_button"

@@ -7,6 +7,8 @@ import android.app.TimePickerDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.icu.util.Calendar;
+import android.location.Address;
+import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -20,20 +22,24 @@ import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.SearchView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentResultListener;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.Timestamp;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
@@ -82,6 +88,7 @@ public class HomeFragment extends Fragment {
         EditText enddate_box = binding.dateEndBox;
         Button camera_button = binding.buttonImgCamera;
         Button gallery_button = binding.buttonImgGallery;
+        SearchView address_box = binding.addressBox;
         Button publish_button = binding.publishButton;
 
         // Map Fragment
@@ -92,11 +99,38 @@ public class HomeFragment extends Fragment {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
                 location = result.getParcelable("location");
+                Geocoder geocoder = new Geocoder(getActivity());
+                try {
+                    String address = geocoder.getFromLocation(location.latitude, location.longitude,
+                            1).get(0).getAddressLine(0);
+                    address_box.setIconified(false);
+                    address_box.setQuery(address, false);
+                    address_box.clearFocus();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 Log.d("Location",location.toString()); // WE HAVE A RESULT FROM THE MAP
             }
         });
 
         // Widgets setup
+
+
+        address_box.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                Bundle addr = new Bundle();
+                addr.putString("address_bundle", address_box.getQuery().toString());
+                getChildFragmentManager().setFragmentResult("address_key", addr);
+//                Toast.makeText(getActivity(), "PRESSED", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
 
         startdate_box.setInputType(InputType.TYPE_NULL);
         startdate_box.setOnClickListener(datepicker(startdate_box));
@@ -159,10 +193,8 @@ public class HomeFragment extends Fragment {
                 p.setPublish_time(new Timestamp(stringToDate(startdate_box.getText().toString())));
                 p.setExpire_time(new Timestamp(stringToDate(enddate_box.getText().toString())));
                 p.setOwner_id(owner_id);
-                // address
+                p.setAddress(address_box.getQuery().toString());
                 p.setImage_url(StorageImgPath);
-
-                p.publish();
 
                 FirebaseStorage storage = FirebaseStorage.getInstance();
                 StorageReference storageRef = storage.getReference();
@@ -175,11 +207,19 @@ public class HomeFragment extends Fragment {
 //                            Toast.makeText(getActivity(),"Image Uploaded Successfully",Toast.LENGTH_SHORT).show();
 //                            imageUri = task.getResult().getMetadata().getPath();
                             Log.d("UPLOAD", "upload image success");
+                            p.publish(getView());
 //                            Toast.makeText(getActivity(),imageUri,Toast.LENGTH_SHORT).show();
                         }
                         else {
 //                            Toast.makeText(getActivity(), task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                             Log.d("UPLOAD", "upload image failure");
+                            Snackbar snack = Snackbar.make(getView(), "Problem uploading image. \nThe parking has not been published.", Snackbar.LENGTH_INDEFINITE);
+                            snack.setAction("Dismiss", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    snack.dismiss();
+                                }
+                            }).show();
 
                         }
                     }

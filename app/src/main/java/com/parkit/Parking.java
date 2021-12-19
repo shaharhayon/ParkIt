@@ -1,5 +1,6 @@
 package com.parkit;
 import android.util.Log;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 
@@ -7,6 +8,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
@@ -36,7 +38,7 @@ public class Parking {
     Timestamp start_time;
     Timestamp end_time;
     Timestamp expire_time;
-    //string
+    String address;
     //available/not
     String image_url;
 
@@ -112,6 +114,14 @@ public class Parking {
         this.expire_time = expire_time;
     }
 
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
     public String getImage_url() {
         return image_url;
     }
@@ -124,7 +134,7 @@ public class Parking {
 
     public Parking(String parking_id, String owner_id, String client_id, GeoPoint location, boolean status,
                    Timestamp publish_time, Timestamp start_time, Timestamp end_time, Timestamp expire_time,
-                   String image_url) {
+                   String address, String image_url) {
         this.parking_id = parking_id;
         this.owner_id = owner_id;
         this.client_id = client_id;
@@ -135,6 +145,7 @@ public class Parking {
         this.end_time = end_time;
         this.expire_time = expire_time;
         this.image_url = image_url;
+        this.address = address;
     }
 
     public Parking(Parking p) {
@@ -148,6 +159,7 @@ public class Parking {
         this.end_time = p.end_time;
         this.expire_time = p.expire_time;
         this.image_url = p.image_url;
+        this.address = p.address;
     }
 
     public Parking(DocumentSnapshot doc) {
@@ -160,6 +172,7 @@ public class Parking {
         this.start_time = doc.getTimestamp("start_time");
         this.end_time = doc.getTimestamp("end_time");
         this.expire_time = doc.getTimestamp("expire_time");
+        this.address = doc.getString("address");
         this.image_url = doc.getString("image_url");
     }
 
@@ -175,7 +188,7 @@ public class Parking {
         return db.collection("parking").document(parking_id).update("status", this.status).isSuccessful();
     }
 
-    public void publish() {
+    public void publish(View view) {
         Map<String, Object> data = new HashMap<>();
         data.put("parking_id", parking_id);
         data.put("owner_id", owner_id);
@@ -186,17 +199,32 @@ public class Parking {
         data.put("expire_time", expire_time);
         data.put("start_time", start_time);
         data.put("end_time", end_time);
+        data.put("address", address);
         data.put("image_url", image_url);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("parking").document().set(data).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(@NonNull Void unused) {
                 Log.d("UPLOAD", "upload success");
+                Snackbar snack = Snackbar.make(view, "Parking successfully published.", Snackbar.LENGTH_INDEFINITE);
+                snack.setAction("Dismiss", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        snack.dismiss();
+                    }
+                }).show();
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
                 Log.d("UPLOAD", "upload failed", e);
+                Snackbar snack = Snackbar.make(view, "Problem uploading parking data. \nThe parking has not been published.", Snackbar.LENGTH_INDEFINITE);
+                snack.setAction("Dismiss", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        snack.dismiss();
+                    }
+                }).show();
             }
         });
     }
