@@ -123,8 +123,6 @@ public class HomeFragment extends Fragment {
 
         // Widgets setup
 
-        binding.imgParking.setStateDescription("NO_IMAGE_LOADED");
-
         address_box.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -277,6 +275,26 @@ public class HomeFragment extends Fragment {
      */
     private View.OnClickListener datepicker(EditText textbox) {
         return new View.OnClickListener() {
+            private boolean isStartBox() {
+                if (textbox.getId() == R.id.date_start_box)
+                    return true;
+                return false;
+            }
+
+            private boolean isEndBox() {
+                if (textbox.getId() == R.id.date_end_box)
+                    return true;
+                return false;
+            }
+
+            private boolean isStartBoxEmpty() {
+                return binding.dateStartBox.getText().toString().equals(getString(R.string.start_date));
+            }
+
+            private boolean isEndBoxEmpty() {
+                return binding.dateEndBox.getText().toString().equals(getString(R.string.end_date));
+            }
+
             @Override
             public void onClick(View v) {
                 String previous = textbox.getText().toString();
@@ -299,11 +317,10 @@ public class HomeFragment extends Fragment {
                                             @Override
                                             public void onTimeSet(TimePicker view, int hour, int minute) {
                                                 textbox.getText().append(" " + checkDigit(hour) + ":" + checkDigit(minute));
-                                                if(!binding.dateStartBox.getText().toString().equals("Start Date") &&
-                                                        !binding.dateEndBox.getText().toString().equals("End Date")){
+                                                if (!isStartBoxEmpty() && !isEndBoxEmpty()) {
                                                     Date start = stringToDate(binding.dateStartBox.getText().toString());
                                                     Date end = stringToDate(binding.dateEndBox.getText().toString());
-                                                    if(start.after(end)){
+                                                    if (start.after(end)) {
                                                         textbox.setText(previous);
                                                         new AlertDialog.Builder(getContext())
                                                                 .setTitle("Date and time")
@@ -319,6 +336,20 @@ public class HomeFragment extends Fragment {
                                 picker.show();
                             }
                         }, year, month, day);
+                if (isStartBox()) {
+                    picker.getDatePicker().setMinDate(new Date().getTime());
+                    if (!isStartBoxEmpty()) {
+                        Date maxDate = stringToDate(binding.dateEndBox.getText().toString());
+                        picker.getDatePicker().setMaxDate(maxDate.getTime());
+                    }
+                } else if (isEndBox()) {
+                    if (!isStartBoxEmpty()) {
+                        Date minDate = stringToDate(binding.dateStartBox.getText().toString());
+                        picker.getDatePicker().setMinDate(minDate.getTime());
+                    } else {
+                        picker.getDatePicker().setMinDate(new Date().getTime());
+                    }
+                }
                 picker.show();
             }
         };
@@ -353,11 +384,11 @@ public class HomeFragment extends Fragment {
     @RequiresApi(api = Build.VERSION_CODES.R)
     private boolean checkAllFields() {
         String nullFields = "";
-        if (binding.dateStartBox.getText().toString().equals("Start Date"))
+        if (binding.dateStartBox.getText().toString().equals(getString(R.string.start_date)))
             nullFields += "start date\n";
-        if (binding.dateEndBox.getText().toString().equals("End Date"))
+        if (binding.dateEndBox.getText().toString().equals(getString(R.string.end_date)))
             nullFields += "end date\n";
-        if (binding.imgParking.getStateDescription() == "NO_IMAGE_LOADED")
+        if (binding.imgParking.getStateDescription() == null)
             nullFields += "image\n";
         if (binding.addressBox.getQuery().toString().isEmpty())
             nullFields += "address\n";
@@ -368,7 +399,7 @@ public class HomeFragment extends Fragment {
             return true;
 
         String nullFieldsString = nullFields;
-        if (nullFields.length()<=11)
+        if (nullFields.length() <= 11)
             nullFieldsString += "\n\nThis field is required in order to publish a new parking.";
         else
             nullFieldsString += "\n\nThose fields are required in order to publish a new parking.";
