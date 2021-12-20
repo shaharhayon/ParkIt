@@ -2,14 +2,17 @@ package com.parkit.ui.home;
 
 import static android.app.Activity.RESULT_OK;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.ActivityNotFoundException;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.icu.util.Calendar;
 import android.location.Address;
 import android.location.Geocoder;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -23,11 +26,14 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.SearchView;
+import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.core.content.FileProvider;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentResultListener;
@@ -61,7 +67,7 @@ import com.parkit.ui.MapFragment;
 
 public class HomeFragment extends Fragment {
 
-//    private HomeViewModel homeViewModel;
+    //    private HomeViewModel homeViewModel;
     private FragmentHomeBinding binding;
     private Parking p;
 
@@ -96,7 +102,7 @@ public class HomeFragment extends Fragment {
         // Map Fragment
 
         Fragment fragment = new MapFragment();
-        getChildFragmentManager().beginTransaction().replace(R.id.fragmentContainerView,fragment).commit();
+        getChildFragmentManager().beginTransaction().replace(R.id.fragmentContainerView, fragment).commit();
         getChildFragmentManager().setFragmentResultListener("location", this, new FragmentResultListener() {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
@@ -111,19 +117,14 @@ public class HomeFragment extends Fragment {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                Log.d("Location",location.toString()); // WE HAVE A RESULT FROM THE MAP
+                Log.d("Location", location.toString()); // WE HAVE A RESULT FROM THE MAP
             }
         });
 
         // Widgets setup
 
-        address_box.setIconifiedByDefault(true);
-        address_box.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                address_box.setIconified(false);
-            }
-        });
+        binding.imgParking.setStateDescription("NO_IMAGE_LOADED");
+
         address_box.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -131,6 +132,7 @@ public class HomeFragment extends Fragment {
                 addr.putString("address_bundle", address_box.getQuery().toString());
                 getChildFragmentManager().setFragmentResult("address_key", addr);
 //                Toast.makeText(getActivity(), "PRESSED", Toast.LENGTH_SHORT).show();
+                address_box.clearFocus();
                 return false;
             }
 
@@ -177,7 +179,7 @@ public class HomeFragment extends Fragment {
             public void onClick(View v) {
                 Intent pickPhoto = new Intent(Intent.ACTION_PICK,
                         MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(pickPhoto , REQUEST_IMAGE_GALLERY);//one can be replaced with any action code
+                startActivityForResult(pickPhoto, REQUEST_IMAGE_GALLERY);//one can be replaced with any action code
 
             }
         });
@@ -192,46 +194,47 @@ public class HomeFragment extends Fragment {
              */
             @Override
             public void onClick(View v) {
-                UUID uuid =  UUID.randomUUID();
-                String StorageImgPath = "images/" + uuid.toString();
-                // Parking_ID is the name of the document in firestore, auto-generated
+                if (checkAllFields()) {
+                    UUID uuid = UUID.randomUUID();
+                    String StorageImgPath = "images/" + uuid.toString();
+                    // Parking_ID is the name of the document in firestore, auto-generated
 
-                p = new Parking();
-                p.setLocation(new GeoPoint(location.latitude, location.longitude));
-                p.setPublish_time(new Timestamp(stringToDate(startdate_box.getText().toString())));
-                p.setExpire_time(new Timestamp(stringToDate(enddate_box.getText().toString())));
-                p.setOwner_id(owner_id);
-                p.setAddress(address_box.getQuery().toString());
-                p.setImage_url(StorageImgPath);
+                    p = new Parking();
+                    p.setLocation(new GeoPoint(location.latitude, location.longitude));
+                    p.setPublish_time(new Timestamp(stringToDate(startdate_box.getText().toString())));
+                    p.setExpire_time(new Timestamp(stringToDate(enddate_box.getText().toString())));
+                    p.setOwner_id(owner_id);
+                    p.setAddress(address_box.getQuery().toString());
+                    p.setImage_url(StorageImgPath);
 
-                FirebaseStorage storage = FirebaseStorage.getInstance();
-                StorageReference storageRef = storage.getReference();
-                StorageReference imgRef = storageRef.child(StorageImgPath);
+                    FirebaseStorage storage = FirebaseStorage.getInstance();
+                    StorageReference storageRef = storage.getReference();
+                    StorageReference imgRef = storageRef.child(StorageImgPath);
 
-                imgRef.putFile(outputFileUri).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
-                        if(task.isSuccessful()){
+                    imgRef.putFile(outputFileUri).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                            if (task.isSuccessful()) {
 //                            Toast.makeText(getActivity(),"Image Uploaded Successfully",Toast.LENGTH_SHORT).show();
 //                            imageUri = task.getResult().getMetadata().getPath();
-                            Log.d("UPLOAD", "upload image success");
-                            p.publish(getView());
+                                Log.d("UPLOAD", "upload image success");
+                                p.publish(getView());
 //                            Toast.makeText(getActivity(),imageUri,Toast.LENGTH_SHORT).show();
-                        }
-                        else {
+                            } else {
 //                            Toast.makeText(getActivity(), task.getException().getMessage(), Toast.LENGTH_SHORT).show();
-                            Log.d("UPLOAD", "upload image failure");
-                            Snackbar snack = Snackbar.make(getView(), "Problem uploading image. \nThe parking has not been published.", Snackbar.LENGTH_INDEFINITE);
-                            snack.setAction("Dismiss", new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    snack.dismiss();
-                                }
-                            }).show();
+                                Log.d("UPLOAD", "upload image failure");
+                                Snackbar snack = Snackbar.make(getView(), "Problem uploading image. \nThe parking has not been published.", Snackbar.LENGTH_INDEFINITE);
+                                snack.setAction("Dismiss", new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        snack.dismiss();
+                                    }
+                                }).show();
 
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
         });
 
@@ -242,14 +245,17 @@ public class HomeFragment extends Fragment {
      * Handles results for activities:
      * + Image capture using camera
      * + Image selection from gallery
+     *
      * @param requestCode
      * @param resultCode
      * @param data
      */
+    @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(resultCode == RESULT_OK){
-            switch (requestCode){
+        if (resultCode == RESULT_OK) {
+            binding.imgParking.setStateDescription("IMAGE_LOADED");
+            switch (requestCode) {
                 case REQUEST_IMAGE_CAPTURE:
                     binding.imgParking.setImageURI(outputFileUri);
 //            Toast toast = Toast.makeText(getActivity().getApplicationContext(),
@@ -265,6 +271,7 @@ public class HomeFragment extends Fragment {
 
     /**
      * Returns date and time interactive picker that stores data into EditText textbox
+     *
      * @param textbox
      * @return View.OnClickListener
      */
@@ -303,6 +310,7 @@ public class HomeFragment extends Fragment {
 
     /**
      * Adds preceding zero to single digit integer
+     *
      * @param number
      * @return String
      */
@@ -313,16 +321,50 @@ public class HomeFragment extends Fragment {
     /**
      * Convert text in EditText into Date object,
      * Fix numbers using constant because of how java Date object works
+     *
      * @param date
      * @return Date object from String date
      */
-    private Date stringToDate(String date){
-        int year = Integer.parseInt(date.substring(6,10)) - 1900;
-        int month = Integer.parseInt(date.substring(3,5)) - 1;
-        int day = Integer.parseInt(date.substring(0,2));
-        int hour = Integer.parseInt(date.substring(11,13));
+    private Date stringToDate(String date) {
+        int year = Integer.parseInt(date.substring(6, 10)) - 1900;
+        int month = Integer.parseInt(date.substring(3, 5)) - 1;
+        int day = Integer.parseInt(date.substring(0, 2));
+        int hour = Integer.parseInt(date.substring(11, 13));
         int minute = Integer.parseInt(date.substring(14));
-        return new Date(year,month, day, hour, minute);
+        return new Date(year, month, day, hour, minute);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    private boolean checkAllFields() {
+        String nullFields = "";
+        if (binding.dateStartBox.getText().toString().equals("Start Date"))
+            nullFields += "start date\n";
+        if (binding.dateEndBox.getText().toString().equals("End Date"))
+            nullFields += "end date\n";
+        if (binding.imgParking.getStateDescription() == "NO_IMAGE_LOADED")
+            nullFields += "image\n";
+        if (binding.addressBox.getQuery().toString().isEmpty())
+            nullFields += "address\n";
+        if (location == null)
+            nullFields += "location\n";
+
+        if (nullFields.isEmpty())
+            return true;
+
+        String nullFieldsString = nullFields;
+        if (nullFields.length()<=11)
+            nullFieldsString += "\n\nThis field is required in order to publish a new parking.";
+        else
+            nullFieldsString += "\n\nThose fields are required in order to publish a new parking.";
+
+
+        new AlertDialog.Builder(getContext())
+                .setTitle("Missing fields")
+                .setMessage(nullFieldsString)
+                .setNeutralButton(android.R.string.ok, null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
+        return false;
     }
 
     @Override

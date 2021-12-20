@@ -163,7 +163,7 @@ public class MapFragment extends Fragment {
                 LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
                 CameraUpdate centerLocation = CameraUpdateFactory.newLatLngZoom(latLng, 18);
                 gMap.moveCamera(centerLocation);
-                setMarker(latLng);
+//                setMarker(latLng);
 //                sendResult(latLng);
             }
         }, null);
