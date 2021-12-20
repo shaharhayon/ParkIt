@@ -35,6 +35,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.Timestamp;
 
@@ -89,7 +90,8 @@ public class HomeFragment extends Fragment {
         Button camera_button = binding.buttonImgCamera;
         Button gallery_button = binding.buttonImgGallery;
         SearchView address_box = binding.addressBox;
-        Button publish_button = binding.publishButton;
+//        Button publish_button = binding.publishButton;
+        FloatingActionButton publish_button = binding.publishButton;
 
         // Map Fragment
 
