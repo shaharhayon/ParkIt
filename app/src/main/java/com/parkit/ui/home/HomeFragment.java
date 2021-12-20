@@ -279,6 +279,7 @@ public class HomeFragment extends Fragment {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                String previous = textbox.getText().toString();
                 final Calendar cldr = Calendar.getInstance();
                 int day = cldr.get(Calendar.DAY_OF_MONTH);
                 int month = cldr.get(Calendar.MONTH);
@@ -298,6 +299,21 @@ public class HomeFragment extends Fragment {
                                             @Override
                                             public void onTimeSet(TimePicker view, int hour, int minute) {
                                                 textbox.getText().append(" " + checkDigit(hour) + ":" + checkDigit(minute));
+                                                if(!binding.dateStartBox.getText().toString().equals("Start Date") &&
+                                                        !binding.dateEndBox.getText().toString().equals("End Date")){
+                                                    Date start = stringToDate(binding.dateStartBox.getText().toString());
+                                                    Date end = stringToDate(binding.dateEndBox.getText().toString());
+                                                    if(start.after(end)){
+                                                        textbox.setText(previous);
+                                                        new AlertDialog.Builder(getContext())
+                                                                .setTitle("Date and time")
+                                                                .setMessage("Start time cannot be after end time.")
+                                                                .setNeutralButton(android.R.string.ok, null)
+                                                                .setIcon(android.R.drawable.ic_dialog_alert)
+                                                                .show();
+                                                        return;
+                                                    }
+                                                }
                                             }
                                         }, hour, minute, true);
                                 picker.show();
