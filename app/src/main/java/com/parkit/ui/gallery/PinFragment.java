@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -53,9 +54,11 @@ public class PinFragment extends Fragment {
 
         ImageView image = view.findViewById(R.id.imageView_parking);
 
-        FloatingActionButton button = view.findViewById(R.id.TakeParkingButton);
+        ImageButton button_close = view.findViewById(R.id.button_pin_close);
 
-        button.setOnClickListener(new View.OnClickListener() {
+        FloatingActionButton fab = view.findViewById(R.id.TakeParkingButton);
+
+        button_close.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 parentFragment.showHidePin(f);

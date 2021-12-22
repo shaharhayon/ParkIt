@@ -33,6 +33,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -70,6 +71,7 @@ public class SearchMapFragment extends Fragment {
 
     Geocoder geocoder;
 
+    List<Marker> MarkersList;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -81,6 +83,7 @@ public class SearchMapFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_map, container, false);
 
+        MarkersList = new ArrayList<>();
 
         SupportMapFragment supportMapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.google_map);
         supportMapFragment.getMapAsync(new OnMapReadyCallback() {
@@ -92,60 +95,46 @@ public class SearchMapFragment extends Fragment {
                     centerLocation(container.getContext());
                 }
 
+                // GoogleMap listeners
 
                 googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
                     @Override
                     public void onMapClick(@NonNull LatLng latLng) {
                         centerMap(latLng);
-
-//                        pinView.setVisibility(FragmentContainerView.VISIBLE);
-                        setMarker(latLng);
-//                        sendResult(latLng);
-//                        FragmentManager homeFragment = getParentFragmentManager();
-//                        Bundle args = new Bundle();
-//                        args.putParcelable("location",latLng);
-//                        homeFragment.setFragmentResult("location",args);
-
-//                        homeFragment.setFragmentResult("location",args);
-//                        googleMap.clear();
-//                        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,10));
                     }
                 });
                 googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
                     @Override
                     public boolean onMarkerClick(@NonNull Marker marker) {
                         ((GalleryFragment) getParentFragment()).showHidePin(getParentFragment().getChildFragmentManager().findFragmentById(R.id.pinFragmentView), marker);
-
-//                        FirebaseStorage storage = FirebaseStorage.getInstance();
-//                        String imageUrl = ((DocumentSnapshot) marker.getTag()).getString("image_url")
-//                        StorageReference img_ref = storage.getReference(imageUrl);
-//                        final long ONE_MEGABYTE = 1024 * 1024;
-//                        img_ref.getBytes(ONE_MEGABYTE).addOnCompleteListener(new OnCompleteListener<byte[]>() {
-//                            @Override
-//                            public void onComplete(@NonNull Task<byte[]> task) {
-//
-//                            }
-//                        });
                         return false;
+                    }
+                });
+                googleMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
+                    @Override
+                    public void onCameraIdle() {
+                        LatLng center = googleMap.getCameraPosition().target;
+                        clearOutOfRangeMarkers();
+                        getParkingsAround(center);
                     }
                 });
             }
         });
 
+
+        // Searchbar listener
+
         getParentFragmentManager().setFragmentResultListener("address_key", this, new FragmentResultListener() {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
                 String address = result.getString("address_bundle");
-//                Geocoder geocoder = new Geocoder(getActivity());
                 try {
                     List<Address> locationList = geocoder.getFromLocationName(address, 1); //.get(0);
                     if (!locationList.isEmpty()) {
                         Address location = locationList.get(0);
                         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-                        CameraUpdate cameraLocation = CameraUpdateFactory.newLatLngZoom(latLng, 18);
-                        gMap.moveCamera(cameraLocation);
-                        setMarker(latLng);
-                        sendResult(latLng);
+                        CameraUpdate cameraLocation = CameraUpdateFactory.newLatLngZoom(latLng, 15);
+                        gMap.animateCamera(cameraLocation);
                     } else {
                         Toast.makeText(getActivity(), "Cant find the specified address", Toast.LENGTH_SHORT).show();
                     }
@@ -157,26 +146,6 @@ public class SearchMapFragment extends Fragment {
         });
 
         return view;
-    }
-
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_LOCATION:
-                if (grantResults[0] == PackageManager.PERMISSION_DENIED
-                        || grantResults[1] == PackageManager.PERMISSION_DENIED) {
-                    Toast.makeText(getActivity(),
-                            "Location permission denied. \nCurrent location will be disabled.",
-                            Toast.LENGTH_SHORT).show();
-                } else {
-                    centerLocation(getContext());
-                    Toast.makeText(getActivity(),
-                            "Location permission granted.",
-                            Toast.LENGTH_SHORT).show();
-                }
-        }
     }
 
     private void centerLocation(Context context) {
@@ -195,38 +164,18 @@ public class SearchMapFragment extends Fragment {
         }, null);
     }
 
-    private static boolean checkLocationPermissions(Context context) {
-        return ((ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
-                && (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED));
+    private Marker setMarker(MarkerOptions markerOptions) {
+        Marker m = gMap.addMarker(markerOptions);
+        MarkersList.add(m);
+        return m;
     }
 
-    private void askLocationPermissions() {
-        Log.d("PERMISSIONS", "Asking device for location permissions");
-        requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
-    }
-
-    private void setMarker(LatLng latLng) {
-        MarkerOptions markerOptions = new MarkerOptions();
-        markerOptions.position(latLng);
-        markerOptions.title(latLng.latitude + " : " + latLng.longitude);
-        try {
-            String title = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1).get(0).getAddressLine(0);
-            markerOptions.title(title);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        gMap.clear();
-        gMap.addMarker(markerOptions);
-    }
-
-    private void sendResult(LatLng latLng) {
+/*    private void sendResult(LatLng latLng) {
         FragmentManager homeFragment = getParentFragmentManager();
         Bundle args = new Bundle();
         args.putParcelable("location", latLng);
         homeFragment.setFragmentResult("location", args);
-    }
+    }*/
 
     private void centerMap(LatLng latLng) {
         gMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
@@ -241,8 +190,16 @@ public class SearchMapFragment extends Fragment {
         layoutParams.setMargins(0, 0, 30, 30);
     }
 
+    private double getCurrentViewRadius(){
+        LatLng latLng1 = gMap.getProjection().getVisibleRegion().latLngBounds.northeast;
+        LatLng latLng2 = gMap.getProjection().getVisibleRegion().latLngBounds.southwest;
+        float[] maxDistance = new float[1];
+        Location.distanceBetween(latLng1.latitude, latLng1.longitude,latLng2.latitude, latLng2.longitude, maxDistance);
+        return maxDistance[0]/2;
+    }
+
     private void getParkingsAround(LatLng latLng) {
-        double radius = 2 * 1000;
+        double radius = getCurrentViewRadius();
         GeoLocation center = new GeoLocation(latLng.latitude, latLng.longitude);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         List<GeoQueryBounds> boundsList = GeoFireUtils.getGeoHashQueryBounds(center, radius);
@@ -255,7 +212,8 @@ public class SearchMapFragment extends Fragment {
                     .endAt(b.endHash)
 //                    .whereGreaterThanOrEqualTo("expire_time", Timestamp.now())
 //                    .whereLessThanOrEqualTo("publish_time", Timestamp.now())
-                    .whereEqualTo("client_id", null);
+                    .whereEqualTo("client_id", null)
+                    .limit(100);
             tasks.add(q.get());
         }
 
@@ -279,10 +237,56 @@ public class SearchMapFragment extends Fragment {
                     MarkerOptions marker = new MarkerOptions();
                     marker.position(new LatLng(geoPoint.getLatitude(), geoPoint.getLongitude()));
                     marker.title(document.getString("address"));
-
-                    gMap.addMarker(marker).setTag(document);
+                    setMarker(marker).setTag(document);
                 }
             }
         });
+    }
+    private void clearOutOfRangeMarkers(){
+        LatLng center = gMap.getCameraPosition().target;
+        double radius = getCurrentViewRadius();
+        float[] distance = new float[1];
+        List<Marker> toRemove = new ArrayList<>();
+        for (Marker m : MarkersList){
+            Location.distanceBetween(m.getPosition().latitude, m.getPosition().longitude,
+                    center.latitude, center.longitude, distance);
+            if(distance[0] > radius){
+                toRemove.add(m);
+                m.remove();
+            }
+        }
+        MarkersList.removeAll(toRemove);
+    }
+
+    // Permission methods
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_LOCATION:
+                if (grantResults[0] == PackageManager.PERMISSION_DENIED
+                        || grantResults[1] == PackageManager.PERMISSION_DENIED) {
+                    Toast.makeText(getActivity(),
+                            "Location permission denied. \nCurrent location will be disabled.",
+                            Toast.LENGTH_SHORT).show();
+                } else {
+                    centerLocation(getContext());
+                    Toast.makeText(getActivity(),
+                            "Location permission granted.",
+                            Toast.LENGTH_SHORT).show();
+                }
+        }
+    }
+
+    private static boolean checkLocationPermissions(Context context) {
+        return ((ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+                && (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED));
+    }
+
+    private void askLocationPermissions() {
+        Log.d("PERMISSIONS", "Asking device for location permissions");
+        requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
     }
 }
