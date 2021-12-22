@@ -90,7 +90,8 @@ public class SearchMapFragment extends Fragment {
             @Override
             public void onMapReady(@NonNull GoogleMap googleMap) {
                 gMap = googleMap;
-                relocateMyLocationButton(view);
+                gMap.getUiSettings().setCompassEnabled(false);
+                relocateMyLocationButton(supportMapFragment.getView());
                 if (checkLocationPermissions(container.getContext())) {
                     centerLocation(container.getContext());
                 }
@@ -156,7 +157,7 @@ public class SearchMapFragment extends Fragment {
             public void onLocationChanged(@NonNull Location location) {
                 LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
                 CameraUpdate centerLocation = CameraUpdateFactory.newLatLngZoom(latLng, 18);
-                gMap.moveCamera(centerLocation);
+                gMap.animateCamera(centerLocation);
 //                setMarker(latLng);
 //                sendResult(latLng);
                 getParkingsAround(latLng);
@@ -182,12 +183,20 @@ public class SearchMapFragment extends Fragment {
     }
 
     private void relocateMyLocationButton(View view) {
-        View locationButton = ((View) view.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
+//        View locationButton = ((View) view.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
+//        View locationButton = ((View) view.findViewById(1).getParent()).findViewById(2);
+        View locationButton = ((View) view.findViewWithTag("GoogleMapMyLocationButton"));
         RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)
                 locationButton.getLayoutParams();
-        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
+        int[] ruleList = layoutParams.getRules();
+        for (int i = 0; i < ruleList.length; i ++) {
+            layoutParams.removeRule(i);
+        }
+        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
-        layoutParams.setMargins(0, 0, 30, 30);
+        layoutParams.setMargins(30, 30, 30, 70);
+        layoutParams.setMarginStart(30);
+        locationButton.setLayoutParams(layoutParams);
     }
 
     private double getCurrentViewRadius(){
@@ -195,7 +204,7 @@ public class SearchMapFragment extends Fragment {
         LatLng latLng2 = gMap.getProjection().getVisibleRegion().latLngBounds.southwest;
         float[] maxDistance = new float[1];
         Location.distanceBetween(latLng1.latitude, latLng1.longitude,latLng2.latitude, latLng2.longitude, maxDistance);
-        return maxDistance[0]/2;
+        return maxDistance[0];
     }
 
     private void getParkingsAround(LatLng latLng) {

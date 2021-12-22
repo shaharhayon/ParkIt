@@ -117,7 +117,7 @@ public class MapFragment extends Fragment {
                         Address location = locationList.get(0);
                         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
                         CameraUpdate cameraLocation = CameraUpdateFactory.newLatLngZoom(latLng, 18);
-                        gMap.moveCamera(cameraLocation);
+                        gMap.animateCamera(cameraLocation);
                         setMarker(latLng);
                         sendResult(latLng);
                     }
@@ -162,7 +162,7 @@ public class MapFragment extends Fragment {
             public void onLocationChanged(@NonNull Location location) {
                 LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
                 CameraUpdate centerLocation = CameraUpdateFactory.newLatLngZoom(latLng, 18);
-                gMap.moveCamera(centerLocation);
+                gMap.animateCamera(centerLocation);
 //                setMarker(latLng);
 //                sendResult(latLng);
             }
