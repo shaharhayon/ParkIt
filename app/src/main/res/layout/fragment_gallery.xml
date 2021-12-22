@@ -4,4 +4,33 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.gallery.GalleryFragment"/>
+    tools:context=".ui.gallery.GalleryFragment">
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/SearchMapFragmentContainerView"
+        android:name="com.parkit.ui.MapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <SearchView
+        android:id="@+id/SearchView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/border"
+        android:clickable="true"
+        android:focusable="true"
+        android:iconifiedByDefault="false"
+        android:inputType="textPostalAddress"
+        android:layout_marginTop="@dimen/activity_vertical_margin"
+        android:layout_marginHorizontal="@dimen/activity_horizontal_margin"
+        app:layout_constraintTop_toTopOf="@id/SearchMapFragmentContainerView" />
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/pinFragmentView"
+        android:name="com.parkit.ui.gallery.PinFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginHorizontal="50dp"
+        android:layout_marginVertical="150dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

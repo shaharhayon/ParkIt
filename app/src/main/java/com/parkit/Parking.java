@@ -39,7 +39,7 @@ public class Parking {
     Timestamp end_time;
     Timestamp expire_time;
     String address;
-    //available/not
+    String geohash;
     String image_url;
 
     public String getParking_id() {
@@ -122,6 +122,14 @@ public class Parking {
         this.address = address;
     }
 
+    public String getGeohash() {
+        return geohash;
+    }
+
+    public void setGeohash(String geohash) {
+        this.geohash = geohash;
+    }
+
     public String getImage_url() {
         return image_url;
     }
@@ -134,7 +142,7 @@ public class Parking {
 
     public Parking(String parking_id, String owner_id, String client_id, GeoPoint location, boolean status,
                    Timestamp publish_time, Timestamp start_time, Timestamp end_time, Timestamp expire_time,
-                   String address, String image_url) {
+                   String address, String geohash, String image_url) {
         this.parking_id = parking_id;
         this.owner_id = owner_id;
         this.client_id = client_id;
@@ -146,6 +154,7 @@ public class Parking {
         this.expire_time = expire_time;
         this.image_url = image_url;
         this.address = address;
+        this.geohash = geohash;
     }
 
     public Parking(Parking p) {
@@ -160,6 +169,7 @@ public class Parking {
         this.expire_time = p.expire_time;
         this.image_url = p.image_url;
         this.address = p.address;
+        this.geohash = p.geohash;
     }
 
     public Parking(DocumentSnapshot doc) {
@@ -173,6 +183,7 @@ public class Parking {
         this.end_time = doc.getTimestamp("end_time");
         this.expire_time = doc.getTimestamp("expire_time");
         this.address = doc.getString("address");
+        this.geohash = doc.getString("geohash");
         this.image_url = doc.getString("image_url");
     }
 
@@ -200,6 +211,7 @@ public class Parking {
         data.put("start_time", start_time);
         data.put("end_time", end_time);
         data.put("address", address);
+        data.put("geohash", geohash);
         data.put("image_url", image_url);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("parking").document().set(data).addOnSuccessListener(new OnSuccessListener<Void>() {

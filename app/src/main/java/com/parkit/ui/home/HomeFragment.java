@@ -39,6 +39,8 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentResultListener;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.firebase.geofire.GeoFireUtils;
+import com.firebase.geofire.GeoLocation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -194,8 +196,9 @@ public class HomeFragment extends Fragment {
             public void onClick(View v) {
                 if (checkAllFields()) {
                     UUID uuid = UUID.randomUUID();
-                    String StorageImgPath = "images/" + uuid.toString();
                     // Parking_ID is the name of the document in firestore, auto-generated
+                    String StorageImgPath = "images/" + uuid.toString();
+                    String geoHash = GeoFireUtils.getGeoHashForLocation(new GeoLocation(location.latitude, location.longitude));
 
                     p = new Parking();
                     p.setLocation(new GeoPoint(location.latitude, location.longitude));
@@ -203,6 +206,7 @@ public class HomeFragment extends Fragment {
                     p.setExpire_time(new Timestamp(stringToDate(enddate_box.getText().toString())));
                     p.setOwner_id(owner_id);
                     p.setAddress(address_box.getQuery().toString());
+                    p.setGeohash(geoHash);
                     p.setImage_url(StorageImgPath);
 
                     FirebaseStorage storage = FirebaseStorage.getInstance();

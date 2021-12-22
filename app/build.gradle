@@ -66,4 +66,6 @@ dependencies {
     implementation 'com.google.firebase:firebase-storage'
     implementation 'com.android.support:multidex:1.0.3'
     implementation 'com.google.android.gms:play-services-maps:18.0.1' //maps
+    implementation 'com.firebase:geofire-android-common:3.1.0' // geolocation queue
+    implementation 'com.squareup.picasso:picasso:2.71828' // picasso for images
 }

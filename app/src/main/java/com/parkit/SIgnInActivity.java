@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import android.widget.Toast;
 
@@ -23,7 +24,14 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class SIgnInActivity extends AppCompatActivity {
 
@@ -37,8 +45,8 @@ public class SIgnInActivity extends AppCompatActivity {
         super.onStart();
 
         FirebaseUser user = mAuth.getCurrentUser();
-        if (user != null){
-            Intent intent = new Intent(getApplicationContext(),MainActivity.class);
+        if (user != null) {
+            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             startActivity(intent);
 
             Toast toast = Toast.makeText(getApplicationContext(),
@@ -112,7 +120,8 @@ public class SIgnInActivity extends AppCompatActivity {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInWithCredential:success");
                             FirebaseUser user = mAuth.getCurrentUser();
-                            Intent intent = new Intent(getApplicationContext(),MainActivity.class);
+                            updateUsersCollection();
+                            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                             startActivity(intent);
                         } else {
                             // If sign in fails, display a message to the user.
@@ -121,5 +130,44 @@ public class SIgnInActivity extends AppCompatActivity {
                         }
                     }
                 });
+    }
+
+    private void updateUsersCollection() {
+        String user_id = mAuth.getCurrentUser().getUid();
+        String user_fullname = mAuth.getCurrentUser().getDisplayName();
+        String user_email = mAuth.getCurrentUser().getEmail();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference docRef = db.collection("users").document(user_id);
+        docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                DocumentSnapshot document = task.getResult();
+                Map<String, Object> changeList = new HashMap<>();
+                if(document.exists()) {
+                    if (!document.getString("fullname").equals(user_fullname)) {
+                        changeList.put("fullname", user_fullname);
+                    }
+                    if (!document.getString("email").equals(user_email)) {
+                        changeList.put("email", user_email);
+                    }
+                    docRef.update(changeList).addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            Toast.makeText(getApplication(), "user updated", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+                else {
+                    changeList.put("fullname", user_fullname);
+                    changeList.put("email", user_email);
+                    docRef.set(changeList).addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            Toast.makeText(getApplication(), "user updated", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            }
+        });
     }
 }
