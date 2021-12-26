@@ -1,15 +1,23 @@
 package com.parkit;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Menu;
+import android.widget.ImageButton;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
@@ -17,6 +25,7 @@ import com.google.android.material.navigation.NavigationView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
@@ -26,7 +35,11 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.parkit.databinding.ActivityMainBinding;
 import com.parkit.databinding.ActivitySignInBinding;
 
@@ -34,6 +47,9 @@ public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
+
+    ConstraintLayout currentParkingLayout;
+    ImageButton stop_button;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +92,110 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
+
+        drawer.addDrawerListener(new DrawerLayout.DrawerListener() {
+            @Override
+            public void onDrawerSlide(@NonNull View drawerView, float slideOffset) {
+
+            }
+
+            @Override
+            public void onDrawerOpened(@NonNull View drawerView) {
+
+            }
+
+            @Override
+            public void onDrawerClosed(@NonNull View drawerView) {
+
+            }
+
+            @Override
+            public void onDrawerStateChanged(int newState) {
+                currentParkingHandler();
+            }
+        });
     }
+
+    private void currentParkingHandler(){
+        currentParkingLayout = findViewById(R.id.currentParkingLayout);
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        String uid = FirebaseAuth.getInstance().getUid();
+        db.collection("parking").whereEqualTo("client_id", uid).get()
+                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                    @Override
+                    public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
+                        if (!queryDocumentSnapshots.isEmpty()) {
+                            DocumentSnapshot doc = queryDocumentSnapshots.getDocuments().get(0);
+                            TextView text = currentParkingLayout.findViewById(R.id.text_current_parking);
+                            text.setText(doc.getString("address"));
+                            currentParkingLayout.setVisibility(View.VISIBLE);
+                            stop_button = findViewById(R.id.button_stop);
+                            stop_button.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    releaseParking(doc);
+                                }
+                            });
+
+                            Timestamp end = doc.getTimestamp("end_time");
+                            Timestamp start = doc.getTimestamp("start_time");
+                            Timestamp now = Timestamp.now();
+                            long totalSeconds = end.getSeconds()- start.getSeconds();
+                            ProgressBar p = findViewById(R.id.parking_progress_bar);
+//                            p.setMax(100);
+//                            p.setProgress((int) (totalSeconds-(now.getSeconds()-start.getSeconds())/totalSeconds) * 100);
+//                            CountDownTimer timer = new CountDownTimer(totalSeconds*1000, 1000) {
+//                                @Override
+//                                public void onTick(long millisUntilFinished) {
+//                                    int secondsUntilFinished = (int) (millisUntilFinished/1000);
+//                                    int value = (int)(totalSeconds-secondsUntilFinished);
+//                                    p.setProgress((int) (value*100/totalSeconds), false);
+//                                }
+                            p.setMax((int) totalSeconds);
+                            int startTime = (int) (now.getSeconds()-start.getSeconds());
+                            p.setProgress(startTime);
+                            CountDownTimer timer = new CountDownTimer((end.getSeconds()- now.getSeconds())*1000, 1000) {
+                                @Override
+                                public void onTick(long millisUntilFinished) {
+                                    int secondsUntilFinished = (int) (millisUntilFinished/1000);
+                                    int value = (int)(totalSeconds-secondsUntilFinished);
+                                    p.setProgress((int) (value*100/totalSeconds) + startTime, false);
+                                }
+
+                                @Override
+                                public void onFinish() {
+                                    forceReleaseParking(doc);
+                                }
+                            };
+                            timer.start();
+                        }
+                        else{
+                            currentParkingLayout.setVisibility(View.INVISIBLE);
+                        }
+                    }
+                });
+    }
+
+/*    private void setProgressValue(final int progress) {
+
+        // set the progress
+        ProgressBar p = findViewById(R.id.parking_progress_bar);
+
+        p.setProgress(progress);
+        // thread is used to change the progress value
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                setProgressValue(progress + 10);
+            }
+        });
+        thread.start();
+    }*/
 
     @Override
     protected void onStart() {
@@ -99,6 +218,8 @@ public class MainActivity extends AppCompatActivity {
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
     }
+
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -125,5 +246,58 @@ public class MainActivity extends AppCompatActivity {
                 openSignIn();
             }
         });
+    }
+
+    private void forceReleaseParking(DocumentSnapshot doc){
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("parking").document(doc.getId())
+                .update("client_id", null,
+                        "start_time", null,
+                        "end_time", null)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(@NonNull Void unused) {
+                        currentParkingLayout.setVisibility(View.INVISIBLE);
+                        Snackbar snack = Snackbar.make(binding.drawerLayout, "Parking released", Snackbar.LENGTH_INDEFINITE);
+                        snack.setAction("Dismiss", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                snack.dismiss();
+                            }
+                        }).show();
+                    }
+                });
+    }
+
+    private void releaseParking(DocumentSnapshot doc){
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Release parking")
+                .setMessage("Are you sure you want to release this parking?")
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        FirebaseFirestore db = FirebaseFirestore.getInstance();
+                        db.collection("parking").document(doc.getId())
+                                .update("client_id", null,
+                                        "start_time", null,
+                                        "end_time", null)
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(@NonNull Void unused) {
+                                        currentParkingLayout.setVisibility(View.INVISIBLE);
+                                        Snackbar snack = Snackbar.make(binding.drawerLayout, "Parking released", Snackbar.LENGTH_INDEFINITE);
+                                        snack.setAction("Dismiss", new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                                snack.dismiss();
+                                            }
+                                        }).show();
+                                    }
+                                });
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
     }
 }

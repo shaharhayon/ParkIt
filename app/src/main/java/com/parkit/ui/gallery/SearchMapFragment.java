@@ -216,7 +216,7 @@ public class SearchMapFragment extends Fragment {
         for (GeoQueryBounds b : boundsList) {
             Query q = db.collection("parking")
                     .orderBy("geohash")
-                    .orderBy("expire_time")
+//                    .orderBy("expire_time")
                     .startAt(b.startHash)
                     .endAt(b.endHash)
 //                    .whereGreaterThanOrEqualTo("expire_time", Timestamp.now())
@@ -237,8 +237,13 @@ public class SearchMapFragment extends Fragment {
                         GeoLocation docLocation = new GeoLocation(
                                 geoPoint.getLatitude(), geoPoint.getLongitude());
                         double distanceMeters = GeoFireUtils.getDistanceBetween(docLocation, center);
-                        if (distanceMeters <= radius)
+                        // remove irrelevant data as firebase can only query 1 complex condition
+                        if ((distanceMeters <= radius) &&
+                                (document.getTimestamp("expire_time").compareTo(Timestamp.now()) > 0) &&
+                                (document.getTimestamp("publish_time").compareTo(Timestamp.now()) < 0))
+                        {
                             results.add(document);
+                        }
                     }
                 }
                 for (DocumentSnapshot document : results) {

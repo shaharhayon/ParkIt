@@ -1,5 +1,8 @@
 package com.parkit.ui.gallery;
 
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -10,21 +13,29 @@ import android.graphics.drawable.DrawableContainer;
 import android.graphics.drawable.DrawableWrapper;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentResultListener;
 
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StreamDownloadTask;
@@ -41,6 +52,18 @@ public class PinFragment extends Fragment {
     Fragment f;
     GalleryFragment parentFragment;
 
+    TextView owner;
+    TextView address;
+    TextView expiretime;
+    ImageView image;
+    View popupView;
+
+    String string_address;
+    String string_owner;
+    String string_expiretime;
+    String string_image_url;
+    String string_parkingid;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -51,11 +74,11 @@ public class PinFragment extends Fragment {
 
         // Widgets
 
-        TextView owner = view.findViewById(R.id.textView_owner_data);
-        TextView address = view.findViewById(R.id.textView_address_data);
-        TextView expiretime = view.findViewById(R.id.textView_expiretime_data);
-
-        ImageView image = view.findViewById(R.id.imageView_parking);
+        owner = view.findViewById(R.id.textView_owner_data);
+        address = view.findViewById(R.id.textView_address_data);
+        expiretime = view.findViewById(R.id.textView_expiretime_data);
+        image = view.findViewById(R.id.imageView_parking);
+        popupView = inflater.inflate(R.layout.claim_popup, null);
 
         ImageButton button_close = view.findViewById(R.id.button_pin_close);
 
@@ -74,17 +97,19 @@ public class PinFragment extends Fragment {
 //                fab.setImageDrawable(ResourcesCompat
 //                        .getDrawable(Resources.getSystem(),
 //                                android.R.drawable.ic_menu_add, null));
+
+                attemptTakeParking();
             }
         });
 
         getParentFragmentManager().setFragmentResultListener("marker_key", this, new FragmentResultListener() {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
-                String string_address = result.getString("address_bundle");
-                String string_owner = result.getString("owner_bundle");
-                String string_expiretime = result.getString("expire_bundle");
-                String string_image_url = result.getString("image_url");
-                String string_parkingid = result.getString("parkingid_bundle");
+                string_address = result.getString("address_bundle");
+                string_owner = result.getString("owner_bundle");
+                string_expiretime = result.getString("expire_bundle");
+                string_image_url = result.getString("image_url");
+                string_parkingid = result.getString("parkingid_bundle");
                 owner.setText(string_owner);
                 address.setText(string_address);
                 expiretime.setText(string_expiretime);
@@ -105,8 +130,96 @@ public class PinFragment extends Fragment {
 
     @Override
     public void onHiddenChanged(boolean hidden) {
-        super.onHiddenChanged(hidden);
+//        super.onHiddenChanged(hidden);
+        if (hidden){
+            clear();
+        }
 
+    }
+
+    private void clear(){
+        owner.setText(null);
+        address.setText(null);
+        expiretime.setText(null);
+//        image.setImageDrawable(ResourcesCompat
+//                .getDrawable(Resources.getSystem(), R.drawable.ic_menu_gallery, null));
+        image.setImageResource(R.drawable.ic_menu_gallery);
+
+        string_address = null;
+        string_owner = null;
+        string_expiretime = null;
+        string_image_url = null;
+        string_parkingid = null;
+    }
+
+    private void attemptTakeParking(){
+        String uid = FirebaseAuth.getInstance().getUid();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("parking").whereEqualTo("client_id", uid).get()
+                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+            @Override
+            public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
+                if(queryDocumentSnapshots.isEmpty()){
+                    new AlertDialog.Builder(getActivity())
+                            .setTitle("Rent parking")
+                            .setMessage("Are you sure you want to rent this parking?")
+                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    takeParking();
+                                }
+                            })
+                            .setNegativeButton(android.R.string.cancel, null)
+                            .setIcon(android.R.drawable.ic_dialog_alert)
+                            .show();
+                }
+                else {
+                    showErrorToast("You're already renting a parking.");
+                }
+            }
+        });
+    }
+
+    private void takeParking(){
+        String uid = FirebaseAuth.getInstance().getUid();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("parking").document(string_parkingid).get()
+                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                    @Override
+                    public void onSuccess(@NonNull DocumentSnapshot documentSnapshot) {
+                        if(documentSnapshot.getString("client_id") == null){
+                            db.collection("parking").document(documentSnapshot.getId())
+                                    .update("client_id", uid,
+                                            "start_time", Timestamp.now(),
+                                            "end_time", documentSnapshot.getTimestamp("expire_time"))
+                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(@NonNull Void unused) {
+                                            showSuccessPopup();
+                                        }
+                                    });
+                        }
+                        else{
+                            // parking already taken!
+                        }
+                    }
+                });
+    }
+
+    private void showSuccessPopup(){
+        Toast toast = new Toast(getActivity().getApplicationContext());
+        toast.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
+        toast.setDuration(Toast.LENGTH_LONG);
+        toast.setView(popupView);
+        toast.show();
+    }
+
+    private void showErrorToast(String text){
+        Toast toast = new Toast(getActivity().getApplicationContext());
+        toast.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
+        toast.setDuration(Toast.LENGTH_LONG);
+        toast.setText(text);
+        toast.show();
     }
 
 }

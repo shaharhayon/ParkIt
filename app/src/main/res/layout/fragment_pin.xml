@@ -5,7 +5,7 @@
     android:id="@+id/pin_fragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/border_small" >
+    android:background="@android:drawable/dialog_holo_light_frame" >
 
     <TextView
         android:id="@+id/textView_owner"
