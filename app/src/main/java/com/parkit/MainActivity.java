@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Menu;
@@ -42,6 +43,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.parkit.databinding.ActivityMainBinding;
 import com.parkit.databinding.ActivitySignInBinding;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -257,6 +261,7 @@ public class MainActivity extends AppCompatActivity {
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(@NonNull Void unused) {
+                        addToLog(doc);
                         currentParkingLayout.setVisibility(View.INVISIBLE);
                         Snackbar snack = Snackbar.make(binding.drawerLayout, "Parking released", Snackbar.LENGTH_INDEFINITE);
                         snack.setAction("Dismiss", new View.OnClickListener() {
@@ -284,6 +289,7 @@ public class MainActivity extends AppCompatActivity {
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
                                     public void onSuccess(@NonNull Void unused) {
+                                        addToLog(doc);
                                         currentParkingLayout.setVisibility(View.INVISIBLE);
                                         Snackbar snack = Snackbar.make(binding.drawerLayout, "Parking released", Snackbar.LENGTH_INDEFINITE);
                                         snack.setAction("Dismiss", new View.OnClickListener() {
@@ -299,5 +305,21 @@ public class MainActivity extends AppCompatActivity {
                 .setNegativeButton(android.R.string.cancel, null)
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .show();
+    }
+
+    private void addToLog(DocumentSnapshot doc){
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        String uid = FirebaseAuth.getInstance().getUid();
+        Map<String, Object> data = new HashMap<>();
+        data.put("parking_id", doc.getId());
+        data.put("client_id", uid);
+        data.put("start_time", doc.getTimestamp("start_time"));
+        data.put("end_time", Timestamp.now());
+        db.collection("log").document().set(data).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(@NonNull Void unused) {
+                Log.d("DATABASE", "added entry to log:" + data.toString());
+            }
+        });
     }
 }
