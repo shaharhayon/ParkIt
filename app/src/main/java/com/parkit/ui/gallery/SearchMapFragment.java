@@ -219,6 +219,7 @@ public class SearchMapFragment extends Fragment {
                     .startAt(b.startHash)
                     .endAt(b.endHash)
                     .whereEqualTo("client_id", null)
+                    .whereEqualTo("status", true)
                     .limit(100);
             tasks.add(q.get());
         }

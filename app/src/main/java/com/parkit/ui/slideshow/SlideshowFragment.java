@@ -19,6 +19,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.parkit.Parking;
 import com.parkit.R;
@@ -48,7 +49,12 @@ public class SlideshowFragment extends Fragment {
 
         String uid = FirebaseAuth.getInstance().getUid();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("parking").whereEqualTo("owner_id", uid).get()
+        db.collection("parking")
+                .orderBy("status", Query.Direction.DESCENDING) // enabled first
+                .orderBy("client_id", Query.Direction.DESCENDING) // used first
+//                .orderBy("client_id", Query.Direction.ASCENDING) // unused first
+                .whereEqualTo("owner_id", uid)
+                .get()
                 .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
                     @Override
                     public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {

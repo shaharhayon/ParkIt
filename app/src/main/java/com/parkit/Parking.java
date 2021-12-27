@@ -75,8 +75,8 @@ public class Parking {
         this.location = location;
     }
 
-    public boolean isStatus() {
-        return status;
+    public boolean getStatus() {
+            return status;
     }
 
     public void setStatus(boolean status) {

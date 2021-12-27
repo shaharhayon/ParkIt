@@ -219,6 +219,7 @@ public class HomeFragment extends Fragment {
                     p.setGeohash(geoHash);
                     p.setImage_url(StorageImgPath);
                     p.setPrice(price_picker.getValue());
+                    p.setStatus(true);
 
                     FirebaseStorage storage = FirebaseStorage.getInstance();
                     StorageReference storageRef = storage.getReference();
