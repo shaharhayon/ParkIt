@@ -253,7 +253,7 @@ public class SearchMapFragment extends Fragment {
             }
         });
     }
-    private void clearOutOfRangeMarkers(){
+    public void clearOutOfRangeMarkers(){
         LatLng center = gMap.getCameraPosition().target;
         double radius = getCurrentViewRadius();
         float[] distance = new float[1];

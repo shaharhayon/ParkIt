@@ -277,7 +277,9 @@ public class HomeFragment extends Fragment {
 //            toast.show();
                     break;
                 case REQUEST_IMAGE_GALLERY:
-                    binding.imgParking.setImageURI(data.getData());
+                    outputFileUri = data.getData();
+                    binding.imgParking.setImageURI(outputFileUri);
+                    break;
             }
         }
     }

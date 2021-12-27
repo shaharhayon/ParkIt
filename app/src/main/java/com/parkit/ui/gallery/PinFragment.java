@@ -38,6 +38,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageMetadata;
+import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.StreamDownloadTask;
 import com.parkit.R;
 
@@ -121,13 +123,21 @@ public class PinFragment extends Fragment {
                 price.setText(String.valueOf(integer_price));
 
                 FirebaseStorage storage = FirebaseStorage.getInstance();
-                storage.getReference(string_image_url).getBytes(1024*1024).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+                StorageReference ref =  storage.getReference(string_image_url);
+                ref.getMetadata().addOnSuccessListener(new OnSuccessListener<StorageMetadata>() {
                     @Override
-                    public void onSuccess(@NonNull byte[] bytes) {
-                        Drawable img = new BitmapDrawable(getResources(), BitmapFactory.decodeByteArray(bytes,0, bytes.length));
-                        image.setImageDrawable(img);
+                    public void onSuccess(@NonNull StorageMetadata storageMetadata) {
+                        long size = storageMetadata.getSizeBytes();
+                        ref.getBytes(size).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+                            @Override
+                            public void onSuccess(@NonNull byte[] bytes) {
+                                Drawable img = new BitmapDrawable(getResources(), BitmapFactory.decodeByteArray(bytes,0, bytes.length));
+                                image.setImageDrawable(img);
+                            }
+                        });
                     }
                 });
+
             }
         });
 
