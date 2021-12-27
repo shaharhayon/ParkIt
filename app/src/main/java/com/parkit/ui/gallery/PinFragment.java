@@ -41,6 +41,7 @@ import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.StreamDownloadTask;
+import com.parkit.MainActivity;
 import com.parkit.R;
 
 import java.io.IOException;
@@ -254,6 +255,7 @@ public class PinFragment extends Fragment {
         toast.setDuration(Toast.LENGTH_LONG);
         toast.setView(popupView);
         toast.show();
+        ((MainActivity)getActivity()).currentParkingHandler();
     }
 
     private void showErrorToast(String text){

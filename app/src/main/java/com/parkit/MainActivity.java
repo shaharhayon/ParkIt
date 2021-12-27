@@ -51,6 +51,8 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -60,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
     ConstraintLayout currentParkingLayout;
     ImageButton stop_button;
     TextView time_passed;
+
+    CountDownTimer timer = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,12 +125,12 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onDrawerStateChanged(int newState) {
-                currentParkingHandler();
+//                currentParkingHandler();
             }
         });
     }
 
-    private void currentParkingHandler(){
+    public void currentParkingHandler(){
         currentParkingLayout = findViewById(R.id.currentParkingLayout);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         String uid = FirebaseAuth.getInstance().getUid();
@@ -166,7 +170,11 @@ public class MainActivity extends AppCompatActivity {
                             int startTime = (int) (now.getSeconds()-start.getSeconds());
                             p.setProgress(startTime);
                             time_passed.setText(secondsToString(startTime));
-                            CountDownTimer timer = new CountDownTimer((end.getSeconds()- now.getSeconds())*1000, 1000) {
+                            if(timer != null){
+                                timer.cancel();
+                                timer = null;
+                            }
+                            timer = new CountDownTimer((end.getSeconds()- now.getSeconds())*1000, 1000) {
                                 @Override
                                 public void onTick(long millisUntilFinished) {
                                     int secondsUntilFinished = (int) (millisUntilFinished/1000);
