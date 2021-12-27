@@ -14,7 +14,6 @@
         android:id="@+id/date_start_box"
         android:layout_width="0dp"
         android:layout_height="@android:dimen/app_icon_size"
-
         android:layout_marginBottom="1dp"
         android:layout_marginEnd="@dimen/activity_horizontal_margin"
         android:clickable="false"
@@ -49,8 +48,8 @@
 
     <Button
         android:id="@+id/button_img_camera"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="@android:dimen/app_icon_size"
         android:text="Camera"
         android:background="@drawable/border"
         android:layout_marginVertical="@dimen/activity_vertical_margin"
@@ -63,7 +62,7 @@
     <Button
         android:id="@+id/button_img_gallery"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="@android:dimen/app_icon_size"
         android:text="Gallery"
         android:background="@drawable/border"
         android:layout_marginVertical="@dimen/activity_vertical_margin"
@@ -71,6 +70,37 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button_img_camera" />
+
+        <NumberPicker
+            android:id="@+id/price_picker"
+            android:layout_width="0dp"
+            android:layout_height="@android:dimen/app_icon_size"
+            android:background="@drawable/border"
+            android:layout_marginVertical="@dimen/activity_vertical_margin"
+            app:layout_constraintEnd_toStartOf="@+id/img_parking"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/button_img_gallery" />
+
+
+<!--    <EditText-->
+<!--        android:id="@+id/price_box"-->
+<!--        android:layout_width="0dp"-->
+<!--        android:layout_height="@android:dimen/app_icon_size"-->
+<!--        android:inputType="numberDecimal"-->
+<!--        android:layout_marginVertical="@dimen/activity_vertical_margin"-->
+<!--        android:background="@drawable/border"-->
+<!--        android:clickable="false"-->
+<!--        android:focusable="false"-->
+<!--        android:text="Price"-->
+<!--        android:textAlignment="center"-->
+<!--        android:gravity="center"-->
+<!--        app:layout_constraintEnd_toStartOf="@+id/img_parking"-->
+<!--        app:layout_constraintHorizontal_bias="0.5"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@id/button_img_gallery" />-->
+
+
 
     <ImageView
         android:id="@+id/img_parking"
@@ -133,6 +163,5 @@
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginBottom="@dimen/activity_vertical_margin"
         app:layout_constraintBottom_toBottomOf="parent"/>
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

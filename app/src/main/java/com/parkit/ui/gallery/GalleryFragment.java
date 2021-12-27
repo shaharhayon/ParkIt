@@ -119,6 +119,7 @@ public class GalleryFragment extends Fragment {
                 mark.putString("expire_bundle", dateString);
                 mark.putString("image_url", doc.getString("image_url"));
                 mark.putString("parkingid_bundle", doc.getId());
+                mark.putInt("price_bundle", doc.getLong("price").intValue());
                 getChildFragmentManager().setFragmentResult("marker_key", mark);
 
             }

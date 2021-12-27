@@ -216,11 +216,8 @@ public class SearchMapFragment extends Fragment {
         for (GeoQueryBounds b : boundsList) {
             Query q = db.collection("parking")
                     .orderBy("geohash")
-//                    .orderBy("expire_time")
                     .startAt(b.startHash)
                     .endAt(b.endHash)
-//                    .whereGreaterThanOrEqualTo("expire_time", Timestamp.now())
-//                    .whereLessThanOrEqualTo("publish_time", Timestamp.now())
                     .whereEqualTo("client_id", null)
                     .limit(100);
             tasks.add(q.get());

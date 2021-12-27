@@ -26,6 +26,7 @@ import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.NumberPicker;
 import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -103,6 +104,7 @@ public class HomeFragment extends Fragment {
         SearchView address_box = binding.addressBox;
 //        Button publish_button = binding.publishButton;
         FloatingActionButton publish_button = binding.publishButton;
+        NumberPicker price_picker = binding.pricePicker;
 
         // Map Fragment
 
@@ -150,6 +152,11 @@ public class HomeFragment extends Fragment {
 
         enddate_box.setInputType(InputType.TYPE_NULL);
         enddate_box.setOnClickListener(datepicker(enddate_box));
+
+        price_picker.setMinValue(0);
+        price_picker.setMaxValue(99);
+        price_picker.setWrapSelectorWheel(false);
+
 
         camera_button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -211,6 +218,7 @@ public class HomeFragment extends Fragment {
                     p.setAddress(address_box.getQuery().toString());
                     p.setGeohash(geoHash);
                     p.setImage_url(StorageImgPath);
+                    p.setPrice(price_picker.getValue());
 
                     FirebaseStorage storage = FirebaseStorage.getInstance();
                     StorageReference storageRef = storage.getReference();

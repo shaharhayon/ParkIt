@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.text.format.Time;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -44,6 +45,10 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.parkit.databinding.ActivityMainBinding;
 import com.parkit.databinding.ActivitySignInBinding;
 
+import org.w3c.dom.Text;
+
+import java.time.Duration;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
 
     ConstraintLayout currentParkingLayout;
     ImageButton stop_button;
+    TextView time_passed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -134,6 +140,7 @@ public class MainActivity extends AppCompatActivity {
                             text.setText(doc.getString("address"));
                             currentParkingLayout.setVisibility(View.VISIBLE);
                             stop_button = findViewById(R.id.button_stop);
+                            time_passed = findViewById(R.id.time_passed);
                             stop_button.setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
@@ -158,12 +165,14 @@ public class MainActivity extends AppCompatActivity {
                             p.setMax((int) totalSeconds);
                             int startTime = (int) (now.getSeconds()-start.getSeconds());
                             p.setProgress(startTime);
+                            time_passed.setText(secondsToString(startTime));
                             CountDownTimer timer = new CountDownTimer((end.getSeconds()- now.getSeconds())*1000, 1000) {
                                 @Override
                                 public void onTick(long millisUntilFinished) {
                                     int secondsUntilFinished = (int) (millisUntilFinished/1000);
                                     int value = (int)(totalSeconds-secondsUntilFinished);
                                     p.setProgress((int) (value*100/totalSeconds) + startTime, false);
+                                    time_passed.setText(secondsToString(startTime + value));
                                 }
 
                                 @Override
@@ -178,6 +187,10 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 });
+    }
+
+    private String secondsToString(long seconds){
+        return String.format("%02d:%02d:%02d", seconds / 3600, (seconds / 60) % 60, seconds % 60);
     }
 
 /*    private void setProgressValue(final int progress) {
@@ -261,15 +274,15 @@ public class MainActivity extends AppCompatActivity {
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(@NonNull Void unused) {
-                        addToLog(doc);
+                        ParkingReleaseHandler(doc);
                         currentParkingLayout.setVisibility(View.INVISIBLE);
-                        Snackbar snack = Snackbar.make(binding.drawerLayout, "Parking released", Snackbar.LENGTH_INDEFINITE);
-                        snack.setAction("Dismiss", new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                snack.dismiss();
-                            }
-                        }).show();
+//                        Snackbar snack = Snackbar.make(binding.drawerLayout, "Parking released", Snackbar.LENGTH_INDEFINITE);
+//                        snack.setAction("Dismiss", new View.OnClickListener() {
+//                            @Override
+//                            public void onClick(View v) {
+//                                snack.dismiss();
+//                            }
+//                        }).show();
                     }
                 });
     }
@@ -289,15 +302,8 @@ public class MainActivity extends AppCompatActivity {
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
                                     public void onSuccess(@NonNull Void unused) {
-                                        addToLog(doc);
+                                        ParkingReleaseHandler(doc);
                                         currentParkingLayout.setVisibility(View.INVISIBLE);
-                                        Snackbar snack = Snackbar.make(binding.drawerLayout, "Parking released", Snackbar.LENGTH_INDEFINITE);
-                                        snack.setAction("Dismiss", new View.OnClickListener() {
-                                            @Override
-                                            public void onClick(View v) {
-                                                snack.dismiss();
-                                            }
-                                        }).show();
                                     }
                                 });
                     }
@@ -307,7 +313,7 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void addToLog(DocumentSnapshot doc){
+    private void ParkingReleaseHandler(DocumentSnapshot doc){
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         String uid = FirebaseAuth.getInstance().getUid();
         Map<String, Object> data = new HashMap<>();
@@ -319,6 +325,39 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSuccess(@NonNull Void unused) {
                 Log.d("DATABASE", "added entry to log:" + data.toString());
+                reduceTokens(doc);
+            }
+        });
+    }
+
+    private void reduceTokens(DocumentSnapshot doc){
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        String uid = FirebaseAuth.getInstance().getUid();
+        db.collection("users").document(uid).get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+            @Override
+            public void onSuccess(@NonNull DocumentSnapshot documentSnapshot) {
+                int previousTokens = documentSnapshot.getLong("tokens").intValue();
+                long startTime = doc.getTimestamp("start_time").getSeconds();
+                long endTime = Timestamp.now().getSeconds();
+                int price = doc.getLong("price").intValue();
+                int toReduceTokens = (int) ((price * (endTime - startTime)) / 3600);
+                int currentTokens = previousTokens-toReduceTokens;
+                db.collection("users").document(uid).update("tokens", currentTokens)
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(@NonNull Void unused) {
+                                Log.d("TOKENS", "reduced " + toReduceTokens + " tokens. Current token count: "
+                                        + (previousTokens-toReduceTokens));
+                                Snackbar snack = Snackbar.make(binding.drawerLayout, "Parking released \nCurrent tokens:" + currentTokens,
+                                        Snackbar.LENGTH_INDEFINITE);
+                                snack.setAction("Dismiss", new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        snack.dismiss();
+                                    }
+                                }).show();
+                            }
+                        });
             }
         });
     }

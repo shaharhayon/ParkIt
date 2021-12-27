@@ -41,6 +41,7 @@ public class Parking {
     String address;
     String geohash;
     String image_url;
+    int price;
 
     public String getParking_id() {
         return parking_id;
@@ -138,11 +139,20 @@ public class Parking {
         this.image_url = image_url;
     }
 
+    public int getPrice() {
+        return price;
+    }
+
+    public void setPrice(int price) {
+        this.price = price;
+    }
+
+
     public Parking(){};
 
     public Parking(String parking_id, String owner_id, String client_id, GeoPoint location, boolean status,
                    Timestamp publish_time, Timestamp start_time, Timestamp end_time, Timestamp expire_time,
-                   String address, String geohash, String image_url) {
+                   String address, String geohash, String image_url, int price) {
         this.parking_id = parking_id;
         this.owner_id = owner_id;
         this.client_id = client_id;
@@ -155,6 +165,7 @@ public class Parking {
         this.image_url = image_url;
         this.address = address;
         this.geohash = geohash;
+        this.price = price;
     }
 
     public Parking(Parking p) {
@@ -170,6 +181,7 @@ public class Parking {
         this.image_url = p.image_url;
         this.address = p.address;
         this.geohash = p.geohash;
+        this.price = p.price;
     }
 
     public Parking(DocumentSnapshot doc) {
@@ -185,6 +197,7 @@ public class Parking {
         this.address = doc.getString("address");
         this.geohash = doc.getString("geohash");
         this.image_url = doc.getString("image_url");
+        this.price = doc.getLong("price").intValue();
     }
 
     public boolean enable(){
@@ -213,6 +226,7 @@ public class Parking {
         data.put("address", address);
         data.put("geohash", geohash);
         data.put("image_url", image_url);
+        data.put("price", price);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("parking").document().set(data).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
@@ -240,98 +254,4 @@ public class Parking {
             }
         });
     }
-
-//    public interface MyCallback {
-//        DocumentSnapshot onCallback(DocumentSnapshot doc);
-//    }
-//
-//    public void getParking(String parking_id, MyCallback callback) {
-//        Parking p = new Parking();
-//        FirebaseFirestore db = FirebaseFirestore.getInstance();
-//        db.collection("parking").document(parking_id).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-//            @Override
-//            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-//                callback.onCallback(task.getResult());p=new Parking(task.getResult());
-//            }
-//        });DocumentSnapshot d = getdoc(new MyCallback() {
-//            @Override
-//            public DocumentSnapshot onCallback(DocumentSnapshot doc) {
-//                return doc;
-//            }
-//        }, "abc");
-//    }
-//
-//    private DocumentSnapshot getdoc(MyCallback callback, String str){
-//        FirebaseFirestore db = FirebaseFirestore.getInstance();
-//        db.collection("parking").document(parking_id).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-//            @Override
-//            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-//                callback.onCallback(task.getResult());
-//            }
-//        });
-//    }
-//
-//    private void loadFromDocument(DocumentSnapshot doc){
-//        this.parking_id = doc.getId();
-//        this.owner_id = doc.getString("owner_id");
-//        this.client_id = doc.getString("client_id");
-//        this.location = doc.getGeoPoint("location");
-//        this.status = Objects.requireNonNull(doc.getBoolean("status"));
-//        this.publish_time = doc.getTimestamp("publish_time");
-//        this.start_time = doc.getTimestamp("start_time");
-//        this.end_time = doc.getTimestamp("end_time");
-//        this.expire_time = doc.getTimestamp("expire_time");
-//        this.image_url = doc.getString("image_url");
-//    }
-
-    public boolean end_parking(){
-        Map<String, Object> log = new HashMap<>();
-        log.put("parking_id", this.parking_id);
-        log.put("client_id", this.client_id);
-        log.put("start_time", this.start_time);
-        log.put("end_time", this.end_time);
-
-        SimpleDateFormat sfd = new SimpleDateFormat("dd-MM-yyyy_HH:mm:ss", Locale.US);
-        String start_string = sfd.format(start_time.toDate());
-        String DocumentName = String.valueOf(parking_id) + '_' + start_string;
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        return db.collection("log").document(DocumentName).set(log).isSuccessful();
-    }
-
-    static List<Parking> getClientParkings(int client_id) {
-        List<Parking> result = new ArrayList<>();
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        CollectionReference parkings = db.collection("parking");
-        Query query = parkings.whereEqualTo("client_id", client_id);
-        query.get().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                for (QueryDocumentSnapshot document : task.getResult()) {
-                    result.add(new Parking(document));
-                }
-            }
-//                else {
-//                     error
-//                }
-        });
-        return result;
-    }
-
-    static List<Parking> getOwnerParkings(int owner_id) {
-        List<Parking> result = new ArrayList<>();
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        CollectionReference parkings = db.collection("parking");
-        Query query = parkings.whereEqualTo("owner_id", owner_id);
-        query.get().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                for (QueryDocumentSnapshot document : task.getResult()) {
-                    result.add(new Parking(document));
-                }
-            }
-//                else {
-//                     error
-//                }
-        });
-        return result;
-    }
-
 }

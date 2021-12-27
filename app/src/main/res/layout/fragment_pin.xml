@@ -69,13 +69,33 @@
         app:layout_constraintBaseline_toBaselineOf="@id/textView_expiretime"
         app:layout_constraintStart_toEndOf="@id/textView_expiretime" />
 
+    <TextView
+        android:id="@+id/textView_price"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Price (Tokens per-hour): "
+        android:textSize="16dp"
+        android:layout_margin="2dp"
+        app:layout_constraintTop_toBottomOf="@id/textView_expiretime"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/textView_price_data"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textSize="16dp"
+        android:layout_margin="2dp"
+        app:layout_constraintBaseline_toBaselineOf="@id/textView_price"
+        app:layout_constraintStart_toEndOf="@id/textView_price" />
+
     <ImageView
         android:id="@+id/imageView_parking"
         android:layout_width="200dp"
         android:layout_height="200dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/textView_expiretime"
+        app:layout_constraintTop_toBottomOf="@id/textView_price"
         app:srcCompat="@drawable/ic_menu_gallery" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton

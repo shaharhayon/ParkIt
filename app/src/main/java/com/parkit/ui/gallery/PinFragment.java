@@ -55,6 +55,7 @@ public class PinFragment extends Fragment {
     TextView owner;
     TextView address;
     TextView expiretime;
+    TextView price;
     ImageView image;
     View popupView;
 
@@ -63,6 +64,8 @@ public class PinFragment extends Fragment {
     String string_expiretime;
     String string_image_url;
     String string_parkingid;
+    Integer integer_price;
+    Integer user_tokens;
 
     @Nullable
     @Override
@@ -77,6 +80,7 @@ public class PinFragment extends Fragment {
         owner = view.findViewById(R.id.textView_owner_data);
         address = view.findViewById(R.id.textView_address_data);
         expiretime = view.findViewById(R.id.textView_expiretime_data);
+        price = view.findViewById(R.id.textView_price_data);
         image = view.findViewById(R.id.imageView_parking);
         popupView = inflater.inflate(R.layout.claim_popup, null);
 
@@ -110,9 +114,11 @@ public class PinFragment extends Fragment {
                 string_expiretime = result.getString("expire_bundle");
                 string_image_url = result.getString("image_url");
                 string_parkingid = result.getString("parkingid_bundle");
+                integer_price = result.getInt("price_bundle");
                 owner.setText(string_owner);
                 address.setText(string_address);
                 expiretime.setText(string_expiretime);
+                price.setText(String.valueOf(integer_price));
 
                 FirebaseStorage storage = FirebaseStorage.getInstance();
                 storage.getReference(string_image_url).getBytes(1024*1024).addOnSuccessListener(new OnSuccessListener<byte[]>() {
@@ -141,6 +147,7 @@ public class PinFragment extends Fragment {
         owner.setText(null);
         address.setText(null);
         expiretime.setText(null);
+        price.setText(null);
 //        image.setImageDrawable(ResourcesCompat
 //                .getDrawable(Resources.getSystem(), R.drawable.ic_menu_gallery, null));
         image.setImageResource(R.drawable.ic_menu_gallery);
@@ -150,31 +157,45 @@ public class PinFragment extends Fragment {
         string_expiretime = null;
         string_image_url = null;
         string_parkingid = null;
+        integer_price = null;
+        user_tokens = null;
     }
 
     private void attemptTakeParking(){
         String uid = FirebaseAuth.getInstance().getUid();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("parking").whereEqualTo("client_id", uid).get()
-                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+        db.collection("users").document(uid).get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
             @Override
-            public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
-                if(queryDocumentSnapshots.isEmpty()){
-                    new AlertDialog.Builder(getActivity())
-                            .setTitle("Rent parking")
-                            .setMessage("Are you sure you want to rent this parking?")
-                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    takeParking();
-                                }
-                            })
-                            .setNegativeButton(android.R.string.cancel, null)
-                            .setIcon(android.R.drawable.ic_dialog_alert)
-                            .show();
+            public void onSuccess(@NonNull DocumentSnapshot documentSnapshot) {
+                user_tokens = documentSnapshot.getLong("tokens").intValue();
+                if((user_tokens <= 0)
+                        && (integer_price != 0)){
+                    showErrorToast("Can't rent this parking, \nyou have 0 tokens");
                 }
                 else {
-                    showErrorToast("You're already renting a parking.");
+                    db.collection("parking").whereEqualTo("client_id", uid).get()
+                            .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                                @Override
+                                public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
+                                    if(queryDocumentSnapshots.isEmpty()){
+                                        new AlertDialog.Builder(getActivity())
+                                                .setTitle("Rent parking")
+                                                .setMessage("Are you sure you want to rent this parking?")
+                                                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        takeParking();
+                                                    }
+                                                })
+                                                .setNegativeButton(android.R.string.cancel, null)
+                                                .setIcon(android.R.drawable.ic_dialog_alert)
+                                                .show();
+                                    }
+                                    else {
+                                        showErrorToast("You're already renting a parking.");
+                                    }
+                                }
+                            });
                 }
             }
         });
@@ -188,19 +209,30 @@ public class PinFragment extends Fragment {
                     @Override
                     public void onSuccess(@NonNull DocumentSnapshot documentSnapshot) {
                         if(documentSnapshot.getString("client_id") == null){
+                            double max_time_tokens_in_seconds = 3600 * (user_tokens.doubleValue() / integer_price.doubleValue());
+                            double max_time_expire_in_seconds =
+                                    documentSnapshot.getTimestamp("expire_time").getSeconds() - Timestamp.now().getSeconds();
+                            Timestamp expireTimestamp;
+                            if(max_time_tokens_in_seconds < max_time_expire_in_seconds){
+                                expireTimestamp = new Timestamp((long) (Timestamp.now().getSeconds()+max_time_tokens_in_seconds), 0);
+                            }
+                            else{
+                                expireTimestamp = documentSnapshot.getTimestamp("expire_time");
+                            }
                             db.collection("parking").document(documentSnapshot.getId())
                                     .update("client_id", uid,
                                             "start_time", Timestamp.now(),
-                                            "end_time", documentSnapshot.getTimestamp("expire_time"))
+                                            "end_time", expireTimestamp)
                                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                                         @Override
                                         public void onSuccess(@NonNull Void unused) {
+                                            // add end time to popup
                                             showSuccessPopup();
                                         }
                                     });
                         }
                         else{
-                            // parking already taken!
+                            showErrorToast("parking already taken!");
                         }
                     }
                 });
