@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/card_view"
+    android:layout_gravity="center"
+    app:cardElevation="10dp"
+    app:cardCornerRadius="20dp"
+    android:layout_margin="10dp"
+    app:cardBackgroundColor="@color/white"
+    app:cardMaxElevation="12dp"
+    app:cardPreventCornerOverlap="true"
+    app:cardUseCompatPadding="true"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" >
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginVertical="@dimen/activity_vertical_margin"
+        android:layout_marginHorizontal="@dimen/activity_horizontal_margin">
+
+        <TextView
+            android:id="@+id/textView_address_card"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Address: "
+            android:textSize="16dp"
+            android:layout_margin="2dp"
+            app:layout_constraintBaseline_toBaselineOf="@id/textView_address_data_card"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/textView_address_data_card"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="16dp"
+            android:maxLines="2"
+            android:singleLine="false"
+            android:layout_margin="2dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toEndOf="@id/textView_address_card" />
+
+        <TextView
+            android:id="@+id/textView_expiretime_card"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Available until: "
+            android:textSize="16dp"
+            android:layout_margin="2dp"
+            app:layout_constraintBaseline_toBaselineOf="@id/textView_expiretime_data_card"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/textView_expiretime_data_card"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="16dp"
+            android:layout_margin="2dp"
+            app:layout_constraintTop_toBottomOf="@id/textView_address_data_card"
+            app:layout_constraintStart_toEndOf="@id/textView_expiretime_card" />
+
+        <TextView
+            android:id="@+id/textView_price_card"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Price (Tokens per-hour): "
+            android:textSize="16dp"
+            android:layout_margin="2dp"
+            app:layout_constraintBaseline_toBaselineOf="@id/textView_price_data_card"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/textView_price_data_card"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="16dp"
+            android:layout_margin="2dp"
+            app:layout_constraintTop_toBottomOf="@id/textView_expiretime_data_card"
+            app:layout_constraintStart_toEndOf="@id/textView_price_card" />
+
+        <ImageView
+            android:id="@+id/image_card"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+            app:layout_constraintTop_toBottomOf="@id/textView_price_data_card"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/floatingActionButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:src="@drawable/ic_menu_manage"
+            android:layout_marginBottom="@dimen/fab_margin"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>
