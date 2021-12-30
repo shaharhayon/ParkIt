@@ -1,9 +1,11 @@
 package com.parkit.ui.profile;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.media.Image;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +31,7 @@ import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.parkit.Parking;
 import com.parkit.R;
+import com.squareup.picasso.Picasso;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -48,7 +51,8 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.Viewhold
     @Override
     public ProfileAdapter.Viewholder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         // to inflate the layout for each item of recycler view.
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.profile_layout, parent, false);
+//        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.profile_layout, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_log_details, parent, false);
         return new ProfileAdapter.Viewholder(view);
     }
 
@@ -60,12 +64,39 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.Viewhold
 
         holder.parkingAddress.setText(parking.getAddress());
 
+        String owner_id = parking.getOwner_id();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("users").document(owner_id).get()
+                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                    @Override
+                    public void onSuccess(@NonNull DocumentSnapshot documentSnapshot) {
+                        String fullname = documentSnapshot.getString("fullname");
+                        holder.owner.setText(fullname);;
+                    }
+                });
+
         SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy, HH:mm");
         String start = format.format(parking.getStart_time().toDate());
         String end = format.format(parking.getEnd_time().toDate());
 
         holder.startTime.setText(start);
         holder.endTime.setText(end);
+
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference ref =  storage.getReference(parking.getImage_url());
+        ref.getMetadata().addOnSuccessListener(new OnSuccessListener<StorageMetadata>() {
+            @Override
+            public void onSuccess(@NonNull StorageMetadata storageMetadata) {
+                long size = storageMetadata.getSizeBytes();
+                ref.getBytes(size).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+                    @Override
+                    public void onSuccess(@NonNull byte[] bytes) {
+                        Drawable img = new BitmapDrawable(context.getResources(), BitmapFactory.decodeByteArray(bytes,0, bytes.length));
+                        holder.image.setImageDrawable(img);
+                    }
+                });
+            }
+        });
     }
 
     @Override
@@ -80,14 +111,18 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.Viewhold
     // your views such as TextView and Imageview.
     public class Viewholder extends RecyclerView.ViewHolder implements View.OnClickListener {
         private TextView parkingAddress,
+                owner,
                 startTime,
                 endTime;
+        private ImageView image;
 
         public Viewholder(@NonNull View itemView) {
             super(itemView);
-            parkingAddress = itemView.findViewById(R.id.parkingAddress);
-            startTime = itemView.findViewById(R.id.startTime);
-            endTime = itemView.findViewById(R.id.endTime);
+            parkingAddress = itemView.findViewById(R.id.details_address_data);
+            owner = itemView.findViewById(R.id.details_owner_data);
+            startTime = itemView.findViewById(R.id.details_start_time_data);
+            endTime = itemView.findViewById(R.id.details_end_time_data);
+            image = itemView.findViewById(R.id.details_image);
             itemView.setOnClickListener(this);
         }
 
@@ -95,5 +130,21 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.Viewhold
         public void onClick(View v) {
             // show details
         }
+    }
+
+    private void scaleImage(Bitmap bitMap){
+//        int currentBitmapWidth = bitMap.getWidth();
+//        int currentBitmapHeight = bitMap.getHeight();
+//
+//        int ivWidth = imageView.getWidth();
+//        int ivHeight = imageView.getHeight();
+//        int newWidth = ivWidth;
+//
+//        newHeight = (int) Math.floor((double) currentBitmapHeight *( (double) new_width / (double) currentBitmapWidth));
+//
+//        Bitmap newbitMap = Bitmap.createScaledBitmap(bitMap, newWidth, newHeight, true);
+//
+//        imageView.setImageBitmap(newbitMap)
+
     }
 }

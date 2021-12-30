@@ -8,7 +8,6 @@
 
     tools:context=".ui.slideshow.SlideshowFragment">
 
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_cards"
         android:layout_width="match_parent"

@@ -1,9 +1,14 @@
 package com.parkit.ui.profile;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -18,6 +23,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
@@ -28,7 +34,11 @@ import com.parkit.databinding.FragmentGalleryBinding;
 import com.parkit.databinding.FragmentProfileBinding;
 import com.parkit.ui.gallery.GalleryViewModel;
 import com.parkit.ui.slideshow.ParkingsAdapter;
+import com.squareup.picasso.Picasso;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +48,11 @@ public class ProfileFragment extends Fragment {
     private ArrayList<Parking> parkingArrayList;
     RecyclerView RV;
 
+    TextView profile_name, profile_email;
+    ImageView profile_image;
+
+
+
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
 
@@ -46,6 +61,17 @@ public class ProfileFragment extends Fragment {
 
         RV = root.findViewById(R.id.profile_rv);
         parkingArrayList = new ArrayList<>();
+
+        profile_name = binding.myProfileName;
+        profile_email = binding.myProfileEmail;
+        profile_image = binding.myProfileImage;
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        profile_name.setText(user.getDisplayName());
+        profile_email.setText(user.getEmail());
+        Picasso.get().load(user.getPhotoUrl()).resize(180,180).into(profile_image);
+
 
         ProfileAdapter profileAdapter = new ProfileAdapter(getActivity(), parkingArrayList);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
@@ -67,33 +93,6 @@ public class ProfileFragment extends Fragment {
                 .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
                     @Override
                     public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
-
-                        /*List<Task<DocumentSnapshot>> tasks = new ArrayList<>();
-                        for (DocumentSnapshot logDoc : queryDocumentSnapshots) {
-                            Task<DocumentSnapshot> d = db.collection("parking")
-                                    .document(logDoc.getString("parking_id"))
-                                    .get();
-                            tasks.add(d);
-                        }
-
-                        Tasks.whenAllComplete(tasks).addOnCompleteListener(new OnCompleteListener<List<Task<?>>>() {
-                            @Override
-                            public void onComplete(@NonNull Task<List<Task<?>>> task) {
-                                List<DocumentSnapshot> resultLogs = new ArrayList<>();
-
-                                for (Task<DocumentSnapshot> taskSnapshot : tasks) {
-                                    DocumentSnapshot snapshot = taskSnapshot.getResult();
-
-                                    Parking p = new Parking(snapshot);
-                                    p.setStart_time(logDoc.getTimestamp("start_time"));
-                                    p.setEnd_time(logDoc.getTimestamp("end_time"));
-                                    p.setClient_id(logDoc.getString("client_id"));
-                                    parkingArrayList.add(p);
-                                }
-
-                            }
-                        });*/
-
                         for (DocumentSnapshot logDoc : queryDocumentSnapshots){
                             db.collection("parking").document(logDoc.getString("parking_id"))
                                     .get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
