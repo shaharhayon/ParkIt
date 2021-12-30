@@ -22,13 +22,15 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.parkit.Parking;
 import com.parkit.R;
 
-import java.sql.Time;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.Viewholder> {
@@ -46,72 +48,24 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.Viewhold
     @Override
     public ProfileAdapter.Viewholder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         // to inflate the layout for each item of recycler view.
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_layout, parent, false);
-        return new Viewholder(view);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.profile_layout, parent, false);
+        return new ProfileAdapter.Viewholder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ProfileAdapter.Viewholder holder, int position) {
         // to set data to textview and imageview of each card layout
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         Parking parking = parkingArrayList.get(position);
-        setImage(parking.getImage_url(), holder.image);
 
-        holder.enableSwitch.setChecked(parking.getStatus());
-        holder.enableSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    db.collection("parking").document(parking.getParking_id()).update("status", true)
-                            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                @Override
-                                public void onSuccess(@NonNull Void unused) {
-                                    Toast.makeText(context, "Parking enabled", Toast.LENGTH_SHORT);
-                                }
-                            });
-                }
-                else {
-                    db.collection("parking").document(parking.getParking_id()).update("status", false)
-                            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                @Override
-                                public void onSuccess(@NonNull Void unused) {
-                                    Toast.makeText(context, "Parking disabled", Toast.LENGTH_SHORT);
-                                }
-                            });
-                }
-            }
-        });
-        holder.address.setText(parking.getAddress());
-        holder.expiretime.setText(parking.getExpire_time().toDate().toString());
-        holder.price.setText(String.valueOf(parking.getPrice()));
-        holder.fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String uid = FirebaseAuth.getInstance().getUid();
-                FirebaseFirestore db = FirebaseFirestore.getInstance();
-                db.collection("parking").document(parking.getParking_id()).get()
-                        .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                            @Override
-                            public void onSuccess(@NonNull DocumentSnapshot documentSnapshot) {
-                                Timestamp now = Timestamp.now();
-                                Timestamp startTime = documentSnapshot.getTimestamp("start_time");
-                                Timestamp endTime = documentSnapshot.getTimestamp("end_time");
-                                String client_id = documentSnapshot.getString("client_id");
-                                if(client_id != null){
-                                    if((startTime != null) && (endTime != null)){
-                                        if((now.compareTo(endTime) == -1) && now.compareTo(startTime) == 1){
-                                            Toast.makeText(context, "Parking currently in use", Toast.LENGTH_SHORT).show();
-                                        }
-                                    }
-                                }
-                                else {
-                                    Toast.makeText(context, "EDIT OPTIONS FOR PARKING ID " + parking.getParking_id(), Toast.LENGTH_SHORT).show();
-                                }
-                            }
-                        });
-            }
-        });
+        holder.parkingAddress.setText(parking.getAddress());
+
+        SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy, HH:mm");
+        String start = format.format(parking.getStart_time().toDate());
+        String end = format.format(parking.getEnd_time().toDate());
+
+        holder.startTime.setText(start);
+        holder.endTime.setText(end);
     }
 
     @Override
@@ -121,41 +75,25 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.Viewhold
         return parkingArrayList.size();
     }
 
-    private void setImage(String url, ImageView image){
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-        StorageReference ref =  storage.getReference(url);
-        ref.getMetadata().addOnSuccessListener(new OnSuccessListener<StorageMetadata>() {
-            @Override
-            public void onSuccess(@NonNull StorageMetadata storageMetadata) {
-                long size = storageMetadata.getSizeBytes();
-                ref.getBytes(size).addOnSuccessListener(new OnSuccessListener<byte[]>() {
-                    @Override
-                    public void onSuccess(@NonNull byte[] bytes) {
-                        Drawable img = new BitmapDrawable(context.getResources(), BitmapFactory.decodeByteArray(bytes,0, bytes.length));
-                        image.setImageDrawable(img);
-                    }
-                });
-            }
-        });
-    }
-
 
     // View holder class for initializing of
     // your views such as TextView and Imageview.
-    public class Viewholder extends RecyclerView.ViewHolder {
-        private ImageView image;
-        private TextView address, expiretime, price;
-        private SwitchCompat enableSwitch;
-        private FloatingActionButton fab;
+    public class Viewholder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        private TextView parkingAddress,
+                startTime,
+                endTime;
 
         public Viewholder(@NonNull View itemView) {
             super(itemView);
-            enableSwitch = itemView.findViewById(R.id.enable_switch);
-            image = itemView.findViewById(R.id.image_card);
-            address = itemView.findViewById(R.id.textView_address_data_card);
-            expiretime = itemView.findViewById(R.id.textView_expiretime_data_card);
-            price = itemView.findViewById(R.id.textView_price_data_card);
-            fab = itemView.findViewById(R.id.floatingActionButton);
+            parkingAddress = itemView.findViewById(R.id.parkingAddress);
+            startTime = itemView.findViewById(R.id.startTime);
+            endTime = itemView.findViewById(R.id.endTime);
+            itemView.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View v) {
+            // show details
         }
     }
 }

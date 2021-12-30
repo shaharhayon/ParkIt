@@ -73,7 +73,6 @@ import com.parkit.ui.MapFragment;
 
 public class HomeFragment extends Fragment {
 
-    //    private HomeViewModel homeViewModel;
     private FragmentHomeBinding binding;
     private Parking p;
 
@@ -83,12 +82,10 @@ public class HomeFragment extends Fragment {
     private Uri outputFileUri;
     private LatLng location;
     private String owner_id;
-//    private String imageUri;
 
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-//        homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
 
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
