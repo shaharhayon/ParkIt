@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:paddingVertical="8dp"
     android:id="@+id/detailsLayout">
 
     <ImageView
@@ -23,7 +24,7 @@
         android:layout_height="wrap_content"
         android:text="Address: "
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"/>
+        app:layout_constraintStart_toStartOf="parent" />
     <TextView
         android:id="@+id/details_address_data"
         android:layout_width="wrap_content"
@@ -77,7 +78,7 @@
         android:layout_height="wrap_content"
         android:text="--end time--"
         app:layout_constraintBaseline_toBaselineOf="@id/details_end_time"
-        app:layout_constraintStart_toEndOf="@id/details_end_time"/>
+        app:layout_constraintStart_toEndOf="@id/details_end_time" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

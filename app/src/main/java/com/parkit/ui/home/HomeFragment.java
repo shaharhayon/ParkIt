@@ -268,7 +268,9 @@ public class HomeFragment extends Fragment {
             binding.imgParking.setStateDescription("IMAGE_LOADED");
             switch (requestCode) {
                 case REQUEST_IMAGE_CAPTURE:
+                    binding.imgParking.setImageURI(null);
                     binding.imgParking.setImageURI(outputFileUri);
+
 //            Toast toast = Toast.makeText(getActivity().getApplicationContext(),
 //                    data.getData().getPath(),
 //                    Toast.LENGTH_LONG);
@@ -276,6 +278,7 @@ public class HomeFragment extends Fragment {
                     break;
                 case REQUEST_IMAGE_GALLERY:
                     outputFileUri = data.getData();
+                    binding.imgParking.setImageURI(null);
                     binding.imgParking.setImageURI(outputFileUri);
                     break;
             }
@@ -353,7 +356,7 @@ public class HomeFragment extends Fragment {
                         }, year, month, day);
                 if (isStartBox()) {
                     picker.getDatePicker().setMinDate(new Date().getTime());
-                    if (!isStartBoxEmpty()) {
+                    if (!isEndBoxEmpty()) {
                         Date maxDate = stringToDate(binding.dateEndBox.getText().toString());
                         picker.getDatePicker().setMaxDate(maxDate.getTime());
                     }
