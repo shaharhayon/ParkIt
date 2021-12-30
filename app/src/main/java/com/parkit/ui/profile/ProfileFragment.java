@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -48,6 +49,11 @@ public class ProfileFragment extends Fragment {
 
         ProfileAdapter profileAdapter = new ProfileAdapter(getActivity(), parkingArrayList);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
+
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(RV.getContext(),
+                linearLayoutManager.getOrientation());
+        RV.addItemDecoration(dividerItemDecoration);
+
         RV.setLayoutManager(linearLayoutManager);
         RV.setAdapter(profileAdapter);
 
