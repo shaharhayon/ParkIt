@@ -107,27 +107,6 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
-        drawer.addDrawerListener(new DrawerLayout.DrawerListener() {
-            @Override
-            public void onDrawerSlide(@NonNull View drawerView, float slideOffset) {
-
-            }
-
-            @Override
-            public void onDrawerOpened(@NonNull View drawerView) {
-
-            }
-
-            @Override
-            public void onDrawerClosed(@NonNull View drawerView) {
-
-            }
-
-            @Override
-            public void onDrawerStateChanged(int newState) {
-//                currentParkingHandler();
-            }
-        });
     }
 
     public void currentParkingHandler(){
@@ -157,15 +136,7 @@ public class MainActivity extends AppCompatActivity {
                             Timestamp now = Timestamp.now();
                             long totalSeconds = end.getSeconds()- start.getSeconds();
                             ProgressBar p = findViewById(R.id.parking_progress_bar);
-//                            p.setMax(100);
-//                            p.setProgress((int) (totalSeconds-(now.getSeconds()-start.getSeconds())/totalSeconds) * 100);
-//                            CountDownTimer timer = new CountDownTimer(totalSeconds*1000, 1000) {
-//                                @Override
-//                                public void onTick(long millisUntilFinished) {
-//                                    int secondsUntilFinished = (int) (millisUntilFinished/1000);
-//                                    int value = (int)(totalSeconds-secondsUntilFinished);
-//                                    p.setProgress((int) (value*100/totalSeconds), false);
-//                                }
+
                             p.setMax((int) totalSeconds);
                             int startTime = (int) (now.getSeconds()-start.getSeconds());
                             p.setProgress(startTime);
@@ -199,35 +170,6 @@ public class MainActivity extends AppCompatActivity {
 
     private String secondsToString(long seconds){
         return String.format("%02d:%02d:%02d", seconds / 3600, (seconds / 60) % 60, seconds % 60);
-    }
-
-/*    private void setProgressValue(final int progress) {
-
-        // set the progress
-        ProgressBar p = findViewById(R.id.parking_progress_bar);
-
-        p.setProgress(progress);
-        // thread is used to change the progress value
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                setProgressValue(progress + 10);
-            }
-        });
-        thread.start();
-    }*/
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (FirebaseAuth.getInstance().getCurrentUser() == null){
-
-        }
     }
 
     @Override
@@ -284,13 +226,6 @@ public class MainActivity extends AppCompatActivity {
                     public void onSuccess(@NonNull Void unused) {
                         ParkingReleaseHandler(doc);
                         currentParkingLayout.setVisibility(View.INVISIBLE);
-//                        Snackbar snack = Snackbar.make(binding.drawerLayout, "Parking released", Snackbar.LENGTH_INDEFINITE);
-//                        snack.setAction("Dismiss", new View.OnClickListener() {
-//                            @Override
-//                            public void onClick(View v) {
-//                                snack.dismiss();
-//                            }
-//                        }).show();
                     }
                 });
     }

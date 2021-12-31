@@ -1,4 +1,4 @@
-package com.parkit.ui.slideshow;
+package com.parkit.ui.myparkings;
 
 import android.content.Context;
 import android.graphics.BitmapFactory;
@@ -52,39 +52,15 @@ public class ParkingsAdapter extends RecyclerView.Adapter<ParkingsAdapter.Viewho
     @Override
     public void onBindViewHolder(@NonNull ParkingsAdapter.Viewholder holder, int position) {
         // to set data to textview and imageview of each card layout
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-
         Parking parking = parkingArrayList.get(position);
         setImage(parking.getImage_url(), holder.image);
 
         holder.enableSwitch.setChecked(parking.getStatus());
-        holder.enableSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    db.collection("parking").document(parking.getParking_id()).update("status", true)
-                            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                @Override
-                                public void onSuccess(@NonNull Void unused) {
-                                    Toast.makeText(context, "Parking enabled", Toast.LENGTH_SHORT);
-                                }
-                            });
-                }
-                else {
-                    db.collection("parking").document(parking.getParking_id()).update("status", false)
-                            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                @Override
-                                public void onSuccess(@NonNull Void unused) {
-                                    Toast.makeText(context, "Parking disabled", Toast.LENGTH_SHORT);
-                                }
-                            });
-                }
-            }
-        });
+        holder.enableSwitch.setOnCheckedChangeListener(enableDisableListener(parking));
         holder.address.setText(parking.getAddress());
         holder.expiretime.setText(parking.getExpire_time().toDate().toString());
         holder.price.setText(String.valueOf(parking.getPrice()));
-        holder.fab.setOnClickListener(new View.OnClickListener() {
+/*        holder.fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String uid = FirebaseAuth.getInstance().getUid();
@@ -110,7 +86,7 @@ public class ParkingsAdapter extends RecyclerView.Adapter<ParkingsAdapter.Viewho
                             }
                         });
             }
-        });
+        });*/
     }
 
     @Override
@@ -156,5 +132,37 @@ public class ParkingsAdapter extends RecyclerView.Adapter<ParkingsAdapter.Viewho
             price = itemView.findViewById(R.id.textView_price_data_card);
             fab = itemView.findViewById(R.id.floatingActionButton);
         }
+    }
+
+    /**
+     * enable-disable button handler
+     * @param parking
+     * @return CompoundButton.OnCheckedChangeListener
+     */
+    private CompoundButton.OnCheckedChangeListener enableDisableListener(Parking parking){
+        return new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                FirebaseFirestore db = FirebaseFirestore.getInstance();
+                if (isChecked) {
+                    db.collection("parking").document(parking.getParking_id()).update("status", true)
+                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(@NonNull Void unused) {
+                                    Toast.makeText(context, "Parking enabled", Toast.LENGTH_SHORT);
+                                }
+                            });
+                }
+                else {
+                    db.collection("parking").document(parking.getParking_id()).update("status", false)
+                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(@NonNull Void unused) {
+                                    Toast.makeText(context, "Parking disabled", Toast.LENGTH_SHORT);
+                                }
+                            });
+                }
+            }
+        };
     }
 }

@@ -1,4 +1,4 @@
-package com.parkit.ui.gallery;
+package com.parkit.ui.search;
 
 import android.Manifest;
 import android.content.Context;
@@ -9,7 +9,6 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,8 +19,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentContainerView;
-import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentResultListener;
 
 import com.firebase.geofire.GeoFireUtils;
@@ -33,27 +30,20 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.Timestamp;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 import com.parkit.R;
 
-import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,9 +58,7 @@ public class SearchMapFragment extends Fragment {
     static final int REQUEST_LOCATION = 100;
 
     GoogleMap gMap;
-
     Geocoder geocoder;
-
     List<Marker> MarkersList;
 
     @Override
@@ -107,7 +95,7 @@ public class SearchMapFragment extends Fragment {
                 googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
                     @Override
                     public boolean onMarkerClick(@NonNull Marker marker) {
-                        ((GalleryFragment) getParentFragment()).showHidePin(getParentFragment().getChildFragmentManager().findFragmentById(R.id.pinFragmentView), marker);
+                        ((SearchFragment) getParentFragment()).showHidePin(getParentFragment().getChildFragmentManager().findFragmentById(R.id.pinFragmentView), marker);
                         return false;
                     }
                 });
@@ -124,7 +112,10 @@ public class SearchMapFragment extends Fragment {
 
 
         // Searchbar listener
-
+        /**
+         * listener that handles address string recieved from parent fragment
+         * @return FragmentResultListener
+         */
         getParentFragmentManager().setFragmentResultListener("address_key", this, new FragmentResultListener() {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
@@ -149,6 +140,10 @@ public class SearchMapFragment extends Fragment {
         return view;
     }
 
+    /**
+     * centers the camera around the user's location
+     * @param context
+     */
     private void centerLocation(Context context) {
         gMap.setMyLocationEnabled(true);
         LocationManager m = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
@@ -165,26 +160,31 @@ public class SearchMapFragment extends Fragment {
         }, null);
     }
 
+    /**
+     * set a marker on the map
+     * adds the marker to the map's markers list
+     * @param markerOptions
+     * @return
+     */
     private Marker setMarker(MarkerOptions markerOptions) {
         Marker m = gMap.addMarker(markerOptions);
         MarkersList.add(m);
         return m;
     }
 
-/*    private void sendResult(LatLng latLng) {
-        FragmentManager homeFragment = getParentFragmentManager();
-        Bundle args = new Bundle();
-        args.putParcelable("location", latLng);
-        homeFragment.setFragmentResult("location", args);
-    }*/
-
+    /**
+     * centers the map around LatLng latLng
+     * @param latLng
+     */
     private void centerMap(LatLng latLng) {
         gMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
     }
 
+    /**
+     * relocates My Location button so it wont override map features
+     * @param view
+     */
     private void relocateMyLocationButton(View view) {
-//        View locationButton = ((View) view.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
-//        View locationButton = ((View) view.findViewById(1).getParent()).findViewById(2);
         View locationButton = ((View) view.findViewWithTag("GoogleMapMyLocationButton"));
         RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)
                 locationButton.getLayoutParams();
@@ -199,6 +199,10 @@ public class SearchMapFragment extends Fragment {
         locationButton.setLayoutParams(layoutParams);
     }
 
+    /**
+     * calculates current view radius from corner to corner
+     * @return
+     */
     private double getCurrentViewRadius(){
         LatLng latLng1 = gMap.getProjection().getVisibleRegion().latLngBounds.northeast;
         LatLng latLng2 = gMap.getProjection().getVisibleRegion().latLngBounds.southwest;
@@ -207,6 +211,12 @@ public class SearchMapFragment extends Fragment {
         return maxDistance[0];
     }
 
+    /**
+     * updates the map with available parkings aroung LatLng latLng
+     * in a dynamic radius according to view distance
+     * limit 100 results
+     * @param latLng
+     */
     private void getParkingsAround(LatLng latLng) {
         double radius = getCurrentViewRadius();
         GeoLocation center = new GeoLocation(latLng.latitude, latLng.longitude);
@@ -254,6 +264,10 @@ public class SearchMapFragment extends Fragment {
             }
         });
     }
+
+    /**
+     * removes all markers that are out of range, to not overload the map with markers
+     */
     public void clearOutOfRangeMarkers(){
         LatLng center = gMap.getCameraPosition().target;
         double radius = getCurrentViewRadius();
@@ -272,6 +286,12 @@ public class SearchMapFragment extends Fragment {
 
     // Permission methods
 
+    /**
+     * permissions result handler
+     * @param requestCode
+     * @param permissions
+     * @param grantResults
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
@@ -291,11 +311,19 @@ public class SearchMapFragment extends Fragment {
         }
     }
 
+    /**
+     * checks if the required permissions are approved
+     * @param context
+     * @return true if permissions granted, else returns false
+     */
     private static boolean checkLocationPermissions(Context context) {
         return ((ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
                 && (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED));
     }
 
+    /**
+     * open permission request dialog
+     */
     private void askLocationPermissions() {
         Log.d("PERMISSIONS", "Asking device for location permissions");
         requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,

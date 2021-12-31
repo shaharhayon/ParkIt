@@ -1,4 +1,4 @@
-package com.parkit.ui.slideshow;
+package com.parkit.ui.myparkings;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -22,7 +22,7 @@ import com.parkit.databinding.FragmentSlideshowBinding;
 
 import java.util.ArrayList;
 
-public class SlideshowFragment extends Fragment {
+public class MyParkingsFragment extends Fragment {
 
     private FragmentSlideshowBinding binding;
 
@@ -36,7 +36,12 @@ public class SlideshowFragment extends Fragment {
 
         RV = root.findViewById(R.id.recycler_cards);
         parkingArrayList = new ArrayList<>();
+        queryMyParkings();
 
+        return root;
+    }
+
+    private void queryMyParkings(){
         String uid = FirebaseAuth.getInstance().getUid();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("parking")
@@ -57,11 +62,6 @@ public class SlideshowFragment extends Fragment {
                         RV.setAdapter(parkingsAdapter);
                     }
                 });
-
-
-
-
-        return root;
     }
 
     @Override

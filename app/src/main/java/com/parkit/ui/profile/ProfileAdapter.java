@@ -83,22 +83,6 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.Viewhold
         holder.startTime.setText(start);
         holder.endTime.setText(end);
 
-//        FirebaseStorage storage = FirebaseStorage.getInstance();
-//        StorageReference ref =  storage.getReference(parking.getImage_url());
-//        ref.getMetadata().addOnSuccessListener(new OnSuccessListener<StorageMetadata>() {
-//            @Override
-//            public void onSuccess(@NonNull StorageMetadata storageMetadata) {
-//                long size = storageMetadata.getSizeBytes();
-//                ref.getBytes(size).addOnSuccessListener(new OnSuccessListener<byte[]>() {
-//                    @Override
-//                    public void onSuccess(@NonNull byte[] bytes) {
-//                        Drawable img = new BitmapDrawable(context.getResources(), BitmapFactory.decodeByteArray(bytes,0, bytes.length));
-//                        holder.image.setImageDrawable(img);
-//                    }
-//                });
-//            }
-//        });
-
         holder.owner.getMeasuredHeight();
     }
 
@@ -135,19 +119,5 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.Viewhold
         }
     }
 
-/*    private void scaleImage(Bitmap bitMap, int scale){
-        int currentBitmapWidth = bitMap.getWidth();
-        int currentBitmapHeight = bitMap.getHeight();
 
-        int ivWidth = imageView.getWidth();
-        int ivHeight = imageView.getHeight();
-        int newWidth = ivWidth;
-
-        newHeight = (int) Math.floor((double) currentBitmapHeight *( (double) new_width / (double) currentBitmapWidth));
-
-        Bitmap newbitMap = Bitmap.createScaledBitmap(bitMap, newWidth, newHeight, true);
-
-        imageView.setImageBitmap(newbitMap)
-
-    }*/
 }

@@ -6,10 +6,8 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.ActivityNotFoundException;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.icu.util.Calendar;
-import android.location.Address;
 import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Build;
@@ -19,29 +17,20 @@ import android.provider.MediaStore;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.RoundedCorner;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.NumberPicker;
 import android.widget.SearchView;
-import android.widget.TextView;
 import android.widget.TimePicker;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.FileProvider;
-import androidx.core.content.res.ResourcesCompat;
-import androidx.core.graphics.drawable.RoundedBitmapDrawable;
-import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentResultListener;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.firebase.geofire.GeoFireUtils;
 import com.firebase.geofire.GeoLocation;
@@ -53,23 +42,18 @@ import com.google.firebase.Timestamp;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.parkit.Parking;
 import com.parkit.R;
 import com.parkit.databinding.FragmentHomeBinding;
-import com.parkit.ui.MapFragment;
 
 public class HomeFragment extends Fragment {
 
@@ -83,6 +67,16 @@ public class HomeFragment extends Fragment {
     private LatLng location;
     private String owner_id;
 
+    // Widgets
+
+    EditText startdate_box;
+    EditText enddate_box;
+    Button camera_button;
+    Button gallery_button;
+    SearchView address_box;
+    FloatingActionButton publish_button;
+    NumberPicker price_picker;
+
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -94,55 +88,23 @@ public class HomeFragment extends Fragment {
 
         // Widgets
 
-        EditText startdate_box = binding.dateStartBox;
-        EditText enddate_box = binding.dateEndBox;
-        Button camera_button = binding.buttonImgCamera;
-        Button gallery_button = binding.buttonImgGallery;
-        SearchView address_box = binding.addressBox;
-//        Button publish_button = binding.publishButton;
-        FloatingActionButton publish_button = binding.publishButton;
-        NumberPicker price_picker = binding.pricePicker;
+        startdate_box = binding.dateStartBox;
+        enddate_box = binding.dateEndBox;
+        camera_button = binding.buttonImgCamera;
+        gallery_button = binding.buttonImgGallery;
+        address_box = binding.addressBox;
+        publish_button = binding.publishButton;
+        price_picker = binding.pricePicker;
 
         // Map Fragment
 
         Fragment fragment = new MapFragment();
         getChildFragmentManager().beginTransaction().replace(R.id.fragmentContainerView, fragment).commit();
-        getChildFragmentManager().setFragmentResultListener("location", this, new FragmentResultListener() {
-            @Override
-            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
-                location = result.getParcelable("location");
-                Geocoder geocoder = new Geocoder(getActivity());
-                try {
-                    String address = geocoder.getFromLocation(location.latitude, location.longitude,
-                            1).get(0).getAddressLine(0);
-                    address_box.setIconified(false);
-                    address_box.setQuery(address, false);
-                    address_box.clearFocus();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                Log.d("Location", location.toString()); // WE HAVE A RESULT FROM THE MAP
-            }
-        });
+        getChildFragmentManager().setFragmentResultListener("location", this, locationResultListener());
 
         // Widgets setup
 
-        address_box.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                Bundle addr = new Bundle();
-                addr.putString("address_bundle", address_box.getQuery().toString());
-                getChildFragmentManager().setFragmentResult("address_key", addr);
-//                Toast.makeText(getActivity(), "PRESSED", Toast.LENGTH_SHORT).show();
-                address_box.clearFocus();
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                return false;
-            }
-        });
+        address_box.setOnQueryTextListener(submitSearchAddressToMap());
 
         startdate_box.setInputType(InputType.TYPE_NULL);
         startdate_box.setOnClickListener(datepicker(startdate_box));
@@ -158,36 +120,15 @@ public class HomeFragment extends Fragment {
         camera_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                File f = new File(getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES),
-                        File.separator + "CAM" + File.separator);
-                f.mkdirs();
-                String fname = owner_id + ".jpg";
-                File sdImageMainDirectory = new File(f, fname);
-//                outputFileUri = Uri.fromFile(sdImageMainDirectory);
-                outputFileUri = FileProvider.getUriForFile(getActivity().getApplicationContext(),
-                        getActivity().getApplicationContext().getPackageName() + ".provider",
-                        sdImageMainDirectory);
-
-                Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-                        .putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri)
-                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        .addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                try {
-                    startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-                } catch (ActivityNotFoundException e) {
-                    // display error state to the user
-                }
-
+                createFileUriForCamera();
+                takePicture();
             }
         });
 
         gallery_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent pickPhoto = new Intent(Intent.ACTION_PICK,
-                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(pickPhoto, REQUEST_IMAGE_GALLERY);//one can be replaced with any action code
-
+                pickPhotoFromGallery();
             }
         });
 
@@ -202,53 +143,11 @@ public class HomeFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 if (checkAllFields()) {
-                    UUID uuid = UUID.randomUUID();
-                    // Parking_ID is the name of the document in firestore, auto-generated
-                    String StorageImgPath = "images/" + uuid.toString();
-                    String geoHash = GeoFireUtils.getGeoHashForLocation(new GeoLocation(location.latitude, location.longitude));
-
-                    p = new Parking();
-                    p.setLocation(new GeoPoint(location.latitude, location.longitude));
-                    p.setPublish_time(new Timestamp(stringToDate(startdate_box.getText().toString())));
-                    p.setExpire_time(new Timestamp(stringToDate(enddate_box.getText().toString())));
-                    p.setOwner_id(owner_id);
-                    p.setAddress(address_box.getQuery().toString());
-                    p.setGeohash(geoHash);
-                    p.setImage_url(StorageImgPath);
-                    p.setPrice(price_picker.getValue());
-                    p.setStatus(true);
-
-                    FirebaseStorage storage = FirebaseStorage.getInstance();
-                    StorageReference storageRef = storage.getReference();
-                    StorageReference imgRef = storageRef.child(StorageImgPath);
-
-                    imgRef.putFile(outputFileUri).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
-                        @Override
-                        public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
-                            if (task.isSuccessful()) {
-//                            Toast.makeText(getActivity(),"Image Uploaded Successfully",Toast.LENGTH_SHORT).show();
-//                            imageUri = task.getResult().getMetadata().getPath();
-                                Log.d("UPLOAD", "upload image success");
-                                p.publish(getView());
-//                            Toast.makeText(getActivity(),imageUri,Toast.LENGTH_SHORT).show();
-                            } else {
-//                            Toast.makeText(getActivity(), task.getException().getMessage(), Toast.LENGTH_SHORT).show();
-                                Log.d("UPLOAD", "upload image failure");
-                                Snackbar snack = Snackbar.make(getView(), "Problem uploading image. \nThe parking has not been published.", Snackbar.LENGTH_INDEFINITE);
-                                snack.setAction("Dismiss", new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View v) {
-                                        snack.dismiss();
-                                    }
-                                }).show();
-
-                            }
-                        }
-                    });
+                    createParkingFromData();
+                    publishParkingWithImage();
                 }
             }
         });
-
         return root;
     }
 
@@ -270,12 +169,8 @@ public class HomeFragment extends Fragment {
                 case REQUEST_IMAGE_CAPTURE:
                     binding.imgParking.setImageURI(null);
                     binding.imgParking.setImageURI(outputFileUri);
-
-//            Toast toast = Toast.makeText(getActivity().getApplicationContext(),
-//                    data.getData().getPath(),
-//                    Toast.LENGTH_LONG);
-//            toast.show();
                     break;
+
                 case REQUEST_IMAGE_GALLERY:
                     outputFileUri = data.getData();
                     binding.imgParking.setImageURI(null);
@@ -399,6 +294,12 @@ public class HomeFragment extends Fragment {
         return new Date(year, month, day, hour, minute);
     }
 
+    /**
+     * Checks if all the required fields are full
+     * @return true if all fields contains the required data
+     *          else returns false and shows an alert dialog,
+     *          specifying the fields the user failed to fill.
+     */
     @RequiresApi(api = Build.VERSION_CODES.R)
     private boolean checkAllFields() {
         String nullFields = "";
@@ -430,6 +331,136 @@ public class HomeFragment extends Fragment {
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .show();
         return false;
+    }
+
+    /**
+     * creates new file URI for the camera captured file,
+     * saves the file to variable outputFileUri
+     */
+    private void createFileUriForCamera(){
+        File f = new File(getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES),
+                File.separator + "CAM" + File.separator);
+        f.mkdirs();
+        String fname = owner_id + ".jpg";
+        File sdImageMainDirectory = new File(f, fname);
+        outputFileUri = FileProvider.getUriForFile(getActivity().getApplicationContext(),
+                getActivity().getApplicationContext().getPackageName() + ".provider",
+                sdImageMainDirectory);
+    }
+
+    /**
+     * launches the intent to capture image from camera,
+     * output file for the image is at variable outputFileUri
+     */
+    private void takePicture(){
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                .putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri)
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                .addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        try {
+            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+        } catch (ActivityNotFoundException e) {
+            // display error state to the user
+        }
+    }
+
+    /**
+     * launches the intent to select an image from device storage
+     */
+    private void pickPhotoFromGallery(){
+        Intent pickPhoto = new Intent(Intent.ACTION_PICK,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        startActivityForResult(pickPhoto, REQUEST_IMAGE_GALLERY);
+    }
+
+    /**
+     * creates a parking object from the data filled in the page
+     * output object is variable p
+     */
+    private void createParkingFromData(){
+        UUID uuid = UUID.randomUUID();
+        // Parking_ID is the name of the document in firestore, auto-generated
+        String StorageImgPath = "images/" + uuid.toString();
+        String geoHash = GeoFireUtils.getGeoHashForLocation(new GeoLocation(location.latitude, location.longitude));
+
+        p = new Parking();
+        p.setLocation(new GeoPoint(location.latitude, location.longitude));
+        p.setPublish_time(new Timestamp(stringToDate(startdate_box.getText().toString())));
+        p.setExpire_time(new Timestamp(stringToDate(enddate_box.getText().toString())));
+        p.setOwner_id(owner_id);
+        p.setAddress(address_box.getQuery().toString());
+        p.setGeohash(geoHash);
+        p.setImage_url(StorageImgPath);
+        p.setPrice(price_picker.getValue());
+        p.setStatus(true);
+    }
+
+    /**
+     * publishes the parking to Firebase Firestore,
+     * publishes the image to Firebase Storage
+     * shows an error on screen if failed
+     */
+    private void publishParkingWithImage(){
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference imgRef = storage.getReference().child(p.getImage_url());
+
+        imgRef.putFile(outputFileUri).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                if (task.isSuccessful()) {
+                    Log.d("UPLOAD", "upload image success");
+                    p.publish(getView());
+                } else {
+                    Log.d("UPLOAD", "upload image failure");
+                    Snackbar snack = Snackbar.make(getView(), "Problem uploading image. \nThe parking has not been published.", Snackbar.LENGTH_INDEFINITE);
+                    snack.setAction("Dismiss", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            snack.dismiss();
+                        }
+                    }).show();
+                }
+            }
+        });
+    }
+
+    private FragmentResultListener locationResultListener(){
+        return new FragmentResultListener() {
+            @Override
+            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
+                location = result.getParcelable("location");
+                Geocoder geocoder = new Geocoder(getActivity());
+                try {
+                    String address = geocoder.getFromLocation(location.latitude, location.longitude,
+                            1).get(0).getAddressLine(0);
+                    address_box.setIconified(false);
+                    address_box.setQuery(address, false);
+                    address_box.clearFocus();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                Log.d("Location", location.toString()); // WE HAVE A RESULT FROM THE MAP
+            }
+        };
+    }
+
+    private SearchView.OnQueryTextListener submitSearchAddressToMap(){
+        return new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                Bundle addr = new Bundle();
+                addr.putString("address_bundle", address_box.getQuery().toString());
+                getChildFragmentManager().setFragmentResult("address_key", addr);
+//                Toast.makeText(getActivity(), "PRESSED", Toast.LENGTH_SHORT).show();
+                address_box.clearFocus();
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        };
     }
 
     @Override
