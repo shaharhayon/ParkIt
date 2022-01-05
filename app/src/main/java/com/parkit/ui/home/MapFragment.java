@@ -9,9 +9,11 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -39,8 +41,6 @@ import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
- * Use the {@link MapFragment#newInstance} factory method to
- * create an instance of this fragment.
  */
 public class MapFragment extends Fragment {
 
@@ -120,6 +120,7 @@ public class MapFragment extends Fragment {
      * centers the camera around the user's location
      * @param context
      */
+    @RequiresApi(api = Build.VERSION_CODES.GINGERBREAD)
     @SuppressLint("MissingPermission")
     private void centerLocation(Context context) {
         gMap.setMyLocationEnabled(true);
