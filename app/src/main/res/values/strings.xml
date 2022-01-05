@@ -17,4 +17,21 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="address_bar">Address</string>
     <string name="claim_success">Claim parking: \nsuccess!</string>
+    <string name="about_text">
+        This application was made for 2 main reasons: \n\n
+        - Parking owners in crowded area, who don\'t use their parking spots 24/7,
+        who want to make a side income by renting their parking while they don\'t use it. \n\n
+        - Drivers who are searching for a parking near their destination, who can\'t find a public
+        parking spot nearby, and usually end up paying extra for a spot in a public parking lot.
+        \n\n\n\n
+        The service we offer makes the connection between the 2 users, and makes it easy for them
+        to manage it.
+        \n\n\n\n
+        ParkIT project team: \n
+        - Shahar Hayon \n
+        - Nitzan Namer \n
+        - Ilan Teitelbaum \n
+        - Yevgeny Lashionov \n
+
+    </string>
 </resources>

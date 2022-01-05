@@ -75,8 +75,8 @@ public class Parking {
         this.location = location;
     }
 
-    public boolean isStatus() {
-        return status;
+    public boolean getStatus() {
+            return status;
     }
 
     public void setStatus(boolean status) {
@@ -197,7 +197,11 @@ public class Parking {
         this.address = doc.getString("address");
         this.geohash = doc.getString("geohash");
         this.image_url = doc.getString("image_url");
-        this.price = doc.getLong("price").intValue();
+        try {
+            this.price = doc.getLong("price").intValue();
+        }catch (Exception e){
+            this.price = 0;
+        }
     }
 
     public boolean enable(){

@@ -14,11 +14,43 @@
       },
       "oauth_client": [
         {
+          "client_id": "15408172144-5o3n1el9cpg9ukqhn112kj4k167sa5st.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.parkit",
+            "certificate_hash": "7439f3d59f4edf6ed44675a9624675cca75c7cd6"
+          }
+        },
+        {
+          "client_id": "15408172144-6rusr74lcctk27kgbf5tse5st912a5u4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.parkit",
+            "certificate_hash": "b61242ee156c1a1101f6633b0908229bbba9bd66"
+          }
+        },
+        {
+          "client_id": "15408172144-aqmo1h0vppu2eav23c24tc1pe8u8d6hc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.parkit",
+            "certificate_hash": "e3bb5c9e26c0e0dbbbca3b2d13288fc9fd96b0fa"
+          }
+        },
+        {
           "client_id": "15408172144-cpcnki5cb3tg4818vdnk6a0gd8rfk52f.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.parkit",
             "certificate_hash": "c3775cb8034cb73653d350124d5a8bc97dbbb71c"
+          }
+        },
+        {
+          "client_id": "15408172144-pihneibveosrmpsh1c7p952gub64rnbe.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.parkit",
+            "certificate_hash": "b5337d82e529631ec2a2a26b04cbd82ee4005f8e"
           }
         },
         {

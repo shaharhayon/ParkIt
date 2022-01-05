@@ -13,13 +13,10 @@ import com.parkit.databinding.FragmentProfileBinding;
 
 public class AboutFragment extends Fragment {
 
-//    private AboutViewModel aboutViewModel;
     private FragmentAboutBinding binding;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-//        AboutViewModel =
-//                new ViewModelProvider(this).get(AboutViewModel.class);
 
         binding = FragmentAboutBinding.inflate(inflater, container, false);
         View root = binding.getRoot();

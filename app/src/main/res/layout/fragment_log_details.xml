@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingVertical="8dp"
+    android:id="@+id/detailsLayout">
+
+    <ImageView
+        android:id="@+id/details_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        />
+
+    <TextView
+        android:id="@+id/details_address"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Address: "
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+    <TextView
+        android:id="@+id/details_address_data"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="--address--"
+        app:layout_constraintStart_toEndOf="@id/details_address"
+        app:layout_constraintBaseline_toBaselineOf="@id/details_address"/>
+
+    <TextView
+        android:id="@+id/details_owner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Owner: "
+        app:layout_constraintTop_toBottomOf="@id/details_address_data"
+        app:layout_constraintStart_toStartOf="parent"/>
+    <TextView
+        android:id="@+id/details_owner_data"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="--owner--"
+        app:layout_constraintStart_toEndOf="@id/details_owner"
+        app:layout_constraintBaseline_toBaselineOf="@id/details_owner"/>
+
+    <TextView
+        android:id="@+id/details_start_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start time: "
+        app:layout_constraintTop_toBottomOf="@id/details_owner_data"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <TextView
+        android:id="@+id/details_start_time_data"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="--start time--"
+        app:layout_constraintBaseline_toBaselineOf="@id/details_start_time"
+        app:layout_constraintStart_toEndOf="@id/details_start_time"/>
+
+    <TextView
+        android:id="@+id/details_end_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="End time: "
+        app:layout_constraintTop_toBottomOf="@id/details_start_time_data"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <TextView
+        android:id="@+id/details_end_time_data"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="--end time--"
+        app:layout_constraintBaseline_toBaselineOf="@id/details_end_time"
+        app:layout_constraintStart_toEndOf="@id/details_end_time" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

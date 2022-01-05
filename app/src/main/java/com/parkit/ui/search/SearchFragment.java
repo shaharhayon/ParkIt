@@ -1,4 +1,4 @@
-package com.parkit.ui.gallery;
+package com.parkit.ui.search;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -22,35 +22,47 @@ import com.parkit.databinding.FragmentGalleryBinding;
 
 import java.text.SimpleDateFormat;
 
-public class GalleryFragment extends Fragment {
+public class SearchFragment extends Fragment {
 
-//    private GalleryViewModel galleryViewModel;
     private FragmentGalleryBinding binding;
+    SearchView searchView;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-//        galleryViewModel =
-//                new ViewModelProvider(this).get(GalleryViewModel.class);
 
         binding = FragmentGalleryBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
         // Widgets
 
-        SearchView searchView = binding.SearchView;
+        searchView = binding.SearchView;
         Fragment pinfragment = new PinFragment();
         getChildFragmentManager().beginTransaction().replace(R.id.pinFragmentView, pinfragment).hide(pinfragment).commit();
 //        getChildFragmentManager().beginTransaction().hide(pinfragment).commit();
 
         // Widgets setup
 
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+        searchView.setOnQueryTextListener(searchQueryHandler());
+
+        // Map Fragment
+
+        Fragment mapFragment = new SearchMapFragment();
+        getChildFragmentManager().beginTransaction().replace(R.id.SearchMapFragmentContainerView, mapFragment).commit();
+
+        return root;
+    }
+
+    /**
+     * handles sending data to map from searchview
+     * @return SearchView.OnQueryTextListener
+     */
+    private SearchView.OnQueryTextListener searchQueryHandler() {
+        return new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 Bundle addr = new Bundle();
                 addr.putString("address_bundle", searchView.getQuery().toString());
                 getChildFragmentManager().setFragmentResult("address_key", addr);
-//                Toast.makeText(getActivity(), "PRESSED", Toast.LENGTH_SHORT).show();
                 searchView.clearFocus();
                 return false;
             }
@@ -59,34 +71,14 @@ public class GalleryFragment extends Fragment {
             public boolean onQueryTextChange(String newText) {
                 return false;
             }
-        });
-
-        // Map Fragment
-
-        Fragment mapFragment = new SearchMapFragment();
-        getChildFragmentManager().beginTransaction().replace(R.id.SearchMapFragmentContainerView, mapFragment).commit();
-        getChildFragmentManager().setFragmentResultListener("location", this, new FragmentResultListener() {
-            @Override
-            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
-//                location = result.getParcelable("location");
-//                Geocoder geocoder = new Geocoder(getActivity());
-//                try {
-//                    String address = geocoder.getFromLocation(location.latitude, location.longitude,
-//                            1).get(0).getAddressLine(0);
-//                    address_box.setIconified(false);
-//                    address_box.setQuery(address, false);
-//                    address_box.clearFocus();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//                Log.d("Location", location.toString()); // WE HAVE A RESULT FROM THE MAP
-            }
-        });
-
-
-        return root;
+        };
     }
 
+    /**
+     * hadnles showing and hiding the Pin view
+     * does not change the data
+     * @param f
+     */
     public void showHidePin(Fragment f){
         FragmentTransaction transaction = getChildFragmentManager().beginTransaction()
                 .setCustomAnimations(R.anim.fade_in, R.anim.fade_out);
@@ -100,6 +92,12 @@ public class GalleryFragment extends Fragment {
         transaction.commit();
     }
 
+    /**
+     * handles showing and hiding the Pin view.
+     * loads data from marker
+     * @param f
+     * @param marker
+     */
     public void showHidePin(Fragment f, Marker marker){
         FragmentTransaction transaction = getChildFragmentManager().beginTransaction()
                 .setCustomAnimations(R.anim.fade_in, R.anim.fade_out);
